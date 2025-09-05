@@ -3,17 +3,25 @@
 function parsePagination(query) {
   const page = Math.max(parseInt(query.page || "1", 10), 1);
   const limitRaw = Math.max(parseInt(query.limit || "10", 10), 1);
-  const limit = Math.min(limitRaw, 100); // hard cap
+  const limit = Math.min(limitRaw, 100);
   const skip = (page - 1) * limit;
   return { page, limit, skip };
 }
 
 function parseSort(query) {
-  // e.g. ?sortBy=createdAt&order=desc
+  // allowlist sederhana
+  const allowed = new Set([
+    "createdAt",
+    "updatedAt",
+    "priority",
+    "status",
+    "subject",
+  ]);
   const sortBy = (query.sortBy || "createdAt").toString();
+  const field = allowed.has(sortBy) ? sortBy : "createdAt";
   const order = (query.order || "desc").toString().toLowerCase();
   const dir = order === "asc" ? 1 : -1;
-  return { [sortBy]: dir };
+  return { [field]: dir };
 }
 
 function buildTicketFilters(query) {
@@ -22,15 +30,16 @@ function buildTicketFilters(query) {
   if (query.status) filters.status = query.status;
   if (query.priority) filters.priority = query.priority;
   if (query.assignee) filters.assignee = query.assignee;
-
-  if (query.tag) {
-    // match tag dalam array
-    filters.tags = { $in: [query.tag] };
-  }
+  if (query.tag) filters.tags = { $in: [query.tag] };
 
   if (query.q) {
     const regex = new RegExp(query.q, "i");
-    filters.$or = [{ title: regex }, { description: regex }, { code: regex }];
+    filters.$or = [
+      { subject: regex },
+      { description: regex },
+      { code: regex },
+      { requester: regex },
+    ];
   }
 
   if (query.from || query.to) {
