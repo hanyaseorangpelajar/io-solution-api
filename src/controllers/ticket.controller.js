@@ -56,6 +56,7 @@ async function create(req, res) {
   assertEnum(priority, PRIORITY, "priority");
 
   const ticket = await service.createTicket(payload, buildContext(req));
+  res.locals.audit = { resourceType: "ticket", resourceId: ticket.id };
   res.status(201).json(ticket);
 }
 
@@ -88,6 +89,7 @@ async function detail(req, res) {
     res.status(404);
     throw new Error("Ticket tidak ditemukan");
   }
+  res.locals.audit = { resourceType: "ticket", resourceId: id };
   res.json(ticket);
 }
 
@@ -102,6 +104,7 @@ async function update(req, res) {
     res.status(404);
     throw new Error("Ticket tidak ditemukan");
   }
+  res.locals.audit = { resourceType: "ticket", resourceId: id };
   res.json(updated);
 }
 
@@ -123,6 +126,7 @@ async function updateStatus(req, res) {
     res.status(404);
     throw new Error("Ticket tidak ditemukan");
   }
+  res.locals.audit = { resourceType: "ticket", resourceId: id };
   res.json(updated);
 }
 
@@ -138,6 +142,7 @@ async function resolve(req, res) {
     res.status(404);
     throw new Error("Ticket tidak ditemukan");
   }
+  res.locals.audit = { resourceType: "ticket", resourceId: id };
   res.json(updated);
 }
 
@@ -148,6 +153,7 @@ async function remove(req, res) {
     res.status(404);
     throw new Error("Ticket tidak ditemukan");
   }
+  res.locals.audit = { resourceType: "ticket", resourceId: id };
   res.json({ message: "Ticket dihapus", id });
 }
 
