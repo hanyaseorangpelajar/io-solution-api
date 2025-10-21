@@ -1,13 +1,11 @@
 // src/routes/index.js
 const { Router } = require("express");
-const healthRoute = require("./health.route");
-const ticketRoute = require("./ticket.route");
-const auditRoute = require("./audit.route");
+const componentRoute = require("./v1/component.route");
+const userRoute = require("./v1/user.route");
 
 const router = Router();
 
-router.use("/health", healthRoute);
-router.use("/tickets", ticketRoute);
-router.use("/audit", auditRoute);
+router.use("/components", componentRoute);
+router.use("/users", userRoute);
 
 module.exports = router;
