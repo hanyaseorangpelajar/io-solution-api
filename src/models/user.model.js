@@ -39,6 +39,12 @@ UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
   return !!user;
 };
 
-const User = mongoose.model("User", UserSchema);
+UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
+  const user = await this.findOne({ username, _id: { $ne: excludeUserId } });
+  return !!user;
+};
+
+// Cek apakah model 'User' sudah ada sebelum membuatnya
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
 module.exports = { User, ROLES };

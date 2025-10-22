@@ -1,6 +1,6 @@
 // src/routes/v1/report.route.js
 const express = require("express");
-const { reportController } = require("../../controllers");
+const reportController = require("../controllers/report.controller");
 
 const router = express.Router();
 

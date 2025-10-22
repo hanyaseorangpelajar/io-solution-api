@@ -1,6 +1,6 @@
 // src/routes/v1/component.route.js
 const express = require("express");
-const { componentController } = require("../../controllers");
+const componentController = require("../controllers/component.controller");
 
 const router = express.Router();
 

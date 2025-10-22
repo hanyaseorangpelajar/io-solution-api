@@ -41,6 +41,9 @@ const KnowledgeEntrySchema = new Schema(
   { timestamps: true }
 );
 
-const KnowledgeEntry = mongoose.model("KnowledgeEntry", KnowledgeEntrySchema);
+// --- BARIS INI DIUBAH ---
+const KnowledgeEntry =
+  mongoose.models.KnowledgeEntry ||
+  mongoose.model("KnowledgeEntry", KnowledgeEntrySchema);
 
 module.exports = { KnowledgeEntry };

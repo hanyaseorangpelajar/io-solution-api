@@ -14,10 +14,7 @@ const TICKET_STATUSES = [
 ];
 
 // --- Sub-Schemas ---
-
-/**
- * Sub-schema untuk riwayat diagnostik.
- */
+// ... (Skema DiagnosticSchema, ComponentUsedSchema, ActionSchema tetap sama) ...
 const DiagnosticSchema = new Schema(
   {
     symptom: {
@@ -38,9 +35,6 @@ const DiagnosticSchema = new Schema(
   { _id: false }
 );
 
-/**
- * Sub-schema untuk komponen yang digunakan dalam sebuah tindakan.
- */
 const ComponentUsedSchema = new Schema(
   {
     component: {
@@ -58,9 +52,6 @@ const ComponentUsedSchema = new Schema(
   { _id: false }
 );
 
-/**
- * Sub-schema untuk riwayat tindakan yang diambil.
- */
 const ActionSchema = new Schema(
   {
     actionTaken: {
@@ -105,9 +96,8 @@ const ServiceTicketSchema = new Schema(
   { timestamps: true }
 );
 
-// Pre-save hook to generate a unique ticket number
+// ... (Pre-save hook tetap sama) ...
 ServiceTicketSchema.pre("save", function (next) {
-  // Hanya generate jika ini dokumen baru dan belum ada ticketNumber
   if (!this.isNew || this.ticketNumber) {
     return next();
   }
@@ -120,6 +110,8 @@ ServiceTicketSchema.pre("save", function (next) {
   next();
 });
 
-const ServiceTicket = mongoose.model("ServiceTicket", ServiceTicketSchema);
+const ServiceTicket =
+  mongoose.models.ServiceTicket ||
+  mongoose.model("ServiceTicket", ServiceTicketSchema);
 
 module.exports = { ServiceTicket, TICKET_STATUSES };

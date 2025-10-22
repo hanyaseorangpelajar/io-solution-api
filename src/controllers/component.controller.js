@@ -1,4 +1,3 @@
-// src/controllers/component.controller.js
 const httpStatus = require("http-status");
 const { componentService } = require("../services");
 const { catchAsync } = require("../utils/catchAsync");

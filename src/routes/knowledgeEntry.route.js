@@ -1,6 +1,6 @@
 // src/routes/v1/knowledgeEntry.route.js
 const express = require("express");
-const { knowledgeEntryController } = require("../../controllers");
+const knowledgeEntryController = require("../controllers/knowledgeEntry.controller");
 
 const router = express.Router();
 

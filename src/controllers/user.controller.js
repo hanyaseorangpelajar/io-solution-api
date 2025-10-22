@@ -3,7 +3,7 @@ const httpStatus = require("http-status");
 const { userService } = require("../services");
 const { catchAsync } = require("../utils/catchAsync");
 const { ApiError } = require("../utils/ApiError");
-const { ROLES } = require("../models/user.model"); // Untuk validasi role
+const { ROLES } = require("../models/user.model");
 
 const createUser = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);

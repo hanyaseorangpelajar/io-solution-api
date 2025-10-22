@@ -1,6 +1,6 @@
 // src/routes/v1/serviceTicket.route.js
 const express = require("express");
-const { serviceTicketController } = require("../../controllers");
+const serviceTicketController = require("../controllers/serviceTicket.controller");
 
 const router = express.Router();
 

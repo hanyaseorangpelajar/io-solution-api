@@ -1,0 +1,685 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+		"name": "IO Solutions API",
+		"description": "Koleksi Postman untuk menguji API Service & Inventory (IO Solutions).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Components",
+			"description": "Manajemen Katalog Komponen",
+			"item": [
+				{
+					"name": "Create Component",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Kingston FURY Beast 16GB DDR4 3200MHz\",\n    \"type\": \"RAM\",\n    \"stock\": 50,\n    \"price\": 850000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/components",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"components"
+							]
+						},
+						"description": "Membuat komponen baru di katalog."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Components",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/components",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"components"
+							]
+						},
+						"description": "Mendapatkan daftar semua komponen."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Component by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/components/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"components",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_KOMPONEN>"
+								}
+							]
+						},
+						"description": "Mendapatkan detail satu komponen berdasarkan ID-nya."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Component",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"stock\": 45,\n    \"price\": 875000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/components/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"components",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_KOMPONEN>"
+								}
+							]
+						},
+						"description": "Memperbarui stok atau harga komponen."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Component",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/components/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"components",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_KOMPONEN>"
+								}
+							]
+						},
+						"description": "Menghapus komponen dari katalog."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"description": "Manajemen Pengguna (Admin, Teknisi)",
+			"item": [
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"budi_teknisi\",\n    \"fullName\": \"Budi Santoso\",\n    \"role\": \"Teknisi\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Membuat pengguna baru (Teknisi atau Admin)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Mendapatkan daftar semua pengguna."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_USER>"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fullName\": \"Budi Santoso Updated\",\n    \"role\": \"Admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_USER>"
+								}
+							]
+						},
+						"description": "Memperbarui nama lengkap atau peran pengguna."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Service Tickets",
+			"description": "Alur Kerja Utama: Manajemen Tiket Layanan",
+			"item": [
+				{
+					"name": "Create Ticket",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customerName\": \"Andi\",\n    \"deviceInfo\": \"Laptop Dell XPS 15\",\n    \"initialComplaint\": \"Layar sering berkedip dan mati sendiri.\",\n    \"createdBy\": \"<GANTI_DENGAN_ID_USER_ADMIN>\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tickets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tickets"
+							]
+						},
+						"description": "Membuat tiket layanan baru."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Tickets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tickets?status=Baru",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tickets"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "Baru"
+								}
+							]
+						},
+						"description": "Mendapatkan semua tiket, bisa difilter berdasarkan status."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Ticket by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tickets/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tickets",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_TIKET>"
+								}
+							]
+						},
+						"description": "Mendapatkan detail lengkap satu tiket."
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Ticket",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"<GANTI_DENGAN_ID_USER_TEKNISI>\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tickets/:id/assign",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tickets",
+								":id",
+								"assign"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_TIKET>"
+								}
+							]
+						},
+						"description": "Mengalokasikan tiket ke seorang teknisi."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Diagnosis",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symptom\": \"Layar berkedip saat digerakkan\",\n    \"diagnosis\": \"Indikasi kerusakan pada kabel fleksibel LCD.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tickets/:id/diagnose",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tickets",
+								":id",
+								"diagnose"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_TIKET>"
+								}
+							]
+						},
+						"description": "Teknisi menambahkan hasil diagnosis ke riwayat tiket."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Action",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"actionTaken\": \"Mengganti kabel fleksibel LCD.\",\n    \"componentsUsed\": [\n        {\n            \"component\": \"<GANTI_DENGAN_ID_KOMPONEN>\",\n            \"quantity\": 1\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tickets/:id/action",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tickets",
+								":id",
+								"action"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_TIKET>"
+								}
+							]
+						},
+						"description": "Teknisi menambahkan tindakan perbaikan dan komponen yang digunakan (akan mengurangi stok)."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Ticket Status",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"Selesai\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tickets/:id/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tickets",
+								":id",
+								"status"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_TIKET>"
+								}
+							]
+						},
+						"description": "Mengubah status tiket (misal: 'Selesai', 'Dibatalkan')."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Knowledge Base",
+			"description": "Manajemen Basis Pengetahuan (KMS)",
+			"item": [
+				{
+					"name": "Create Entry from Ticket",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/knowledge/from-ticket/:ticketId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"knowledge",
+								"from-ticket",
+								":ticketId"
+							],
+							"variable": [
+								{
+									"key": "ticketId",
+									"value": "<GANTI_DENGAN_ID_TIKET_SELESAI>"
+								}
+							]
+						},
+						"description": "Membuat draft entri KB secara otomatis dari tiket yang sudah 'Selesai'."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Published Entries",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/knowledge",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"knowledge"
+							]
+						},
+						"description": "Melihat semua entri KB yang sudah dipublikasikan."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Draft Entries",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/knowledge/drafts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"knowledge",
+								"drafts"
+							]
+						},
+						"description": "Melihat semua entri KB yang masih berupa draft."
+					},
+					"response": []
+				},
+				{
+					"name": "Publish Entry",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/knowledge/:id/publish",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"knowledge",
+								":id",
+								"publish"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "<GANTI_DENGAN_ID_KB_DRAFT>"
+								}
+							]
+						},
+						"description": "Mempublikasikan sebuah entri KB yang masih draft."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Entry Manually",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Cara Mengatasi Overheating pada CPU Ryzen 5\",\n    \"symptom\": \"Komputer mati mendadak saat bermain game berat.\",\n    \"diagnosis\": \"Suhu CPU mencapai lebih dari 95°C.\",\n    \"solution\": \"Ganti thermal paste dan pastikan aliran udara casing baik.\",\n    \"relatedComponents\": [\n        \"<GANTI_DENGAN_ID_KOMPONEN_CPU>\"\n    ],\n    \"sourceTicket\": \"<GANTI_DENGAN_ID_TIKET_TERKAIT>\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/knowledge",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"knowledge"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reports",
+			"description": "Laporan dan Analitik Data",
+			"item": [
+				{
+					"name": "Ticket Summary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/reports/ticket-summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reports",
+								"ticket-summary"
+							]
+						},
+						"description": "Laporan jumlah tiket per status dan per teknisi."
+					},
+					"response": []
+				},
+				{
+					"name": "Component Usage",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/reports/component-usage",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reports",
+								"component-usage"
+							]
+						},
+						"description": "Laporan komponen yang paling sering digunakan."
+					},
+					"response": []
+				},
+				{
+					"name": "Common Issues",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/reports/common-issues",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reports",
+								"common-issues"
+							]
+						},
+						"description": "Laporan gejala/masalah yang paling sering muncul."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Memeriksa status kesehatan dan informasi dasar dari service API."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:4000/api/v1",
+			"type": "string"
+		}
+	]
+}
