@@ -1,0 +1,48 @@
+.
+|-- README.md
+|-- collection.json
+|-- package-lock.json
+|-- package.json
+|-- server.js
+|-- src
+|   |-- app.js
+|   |-- config
+|   |   `-- db.js
+|   |-- controllers
+|   |   |-- component.controller.js
+|   |   |-- knowledgeEntry.controller.js
+|   |   |-- report.controller.js
+|   |   |-- serviceTicket.controller.js
+|   |   `-- user.controller.js
+|   |-- middlewares
+|   |   `-- error.js
+|   |-- models
+|   |   |-- component.model.js
+|   |   |-- knowledgeEntry.model.js
+|   |   |-- serviceTicket.model.js
+|   |   `-- user.model.js
+|   |-- routes
+|   |   |-- component.route.js
+|   |   |-- health.route.js
+|   |   |-- index.js
+|   |   |-- knowledgeEntry.route.js
+|   |   |-- report.route.js
+|   |   |-- serviceTicket.route.js
+|   |   |-- test.route.js
+|   |   `-- user.route.js
+|   |-- services
+|   |   |-- component.service.js
+|   |   |-- index.js
+|   |   |-- knowledgeEntry.service.js
+|   |   |-- report.service.js
+|   |   |-- serviceTicket.service.js
+|   |   `-- user.service.js
+|   `-- utils
+|       |-- ApiError.js
+|       |-- catchAsync.js
+|       |-- diff.js
+|       |-- dto.js
+|       `-- query.js
+`-- tree.txt
+
+8 directories, 37 files

@@ -7,8 +7,80 @@
 	},
 	"item": [
 		{
+			"name": "Auth",
+			"description": "Endpoint untuk registrasi dan login",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"sysadmin\",\n    \"password\": \"password123\",\n    \"fullName\": \"System Admin Utama\",\n    \"role\": \"SysAdmin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Membuat pengguna baru (SysAdmin, Admin, atau Teknisi)"
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"sysadmin\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login untuk mendapatkan JWT Token."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Components",
-			"description": "Manajemen Katalog Komponen",
+			"description": "Manajemen Katalog Komponen (Protected: Admin/SysAdmin)",
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{authToken}}",
+						"type": "string"
+					}
+				]
+			},
 			"item": [
 				{
 					"name": "Create Component",
@@ -33,7 +105,7 @@
 								"components"
 							]
 						},
-						"description": "Membuat komponen baru di katalog."
+						"description": "Membuat komponen baru di katalog. (Hanya Admin/SysAdmin)"
 					},
 					"response": []
 				},
@@ -51,7 +123,7 @@
 								"components"
 							]
 						},
-						"description": "Mendapatkan daftar semua komponen."
+						"description": "Mendapatkan daftar semua komponen. (Semua user ter-login)"
 					},
 					"response": []
 				},
@@ -72,11 +144,11 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "<GANTI_DENGAN_ID_KOMPONEN>"
+									"value": "<GANTI_DENGAN_ID_KOMPONPONEN>"
 								}
 							]
 						},
-						"description": "Mendapatkan detail satu komponen berdasarkan ID-nya."
+						"description": "Mendapatkan detail satu komponen berdasarkan ID-nya. (Semua user ter-login)"
 					},
 					"response": []
 				},
@@ -106,11 +178,11 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "<GANTI_DENGAN_ID_KOMPONEN>"
+									"value": "<GANTI_DENGAN_ID_KOMPONPONEN>"
 								}
 							]
 						},
-						"description": "Memperbarui stok atau harga komponen."
+						"description": "Memperbarui stok atau harga komponen. (Hanya Admin/SysAdmin)"
 					},
 					"response": []
 				},
@@ -131,11 +203,11 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "<GANTI_DENGAN_ID_KOMPONEN>"
+									"value": "<GANTI_DENGAN_ID_KOMPONPONEN>"
 								}
 							]
 						},
-						"description": "Menghapus komponen dari katalog."
+						"description": "Menghapus komponen dari katalog. (Hanya Admin/SysAdmin)"
 					},
 					"response": []
 				}
@@ -143,7 +215,17 @@
 		},
 		{
 			"name": "Users",
-			"description": "Manajemen Pengguna (Admin, Teknisi)",
+			"description": "Manajemen Pengguna (Protected: SysAdmin Only)",
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{authToken}}",
+						"type": "string"
+					}
+				]
+			},
 			"item": [
 				{
 					"name": "Create User",
@@ -152,7 +234,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"budi_teknisi\",\n    \"fullName\": \"Budi Santoso\",\n    \"role\": \"Teknisi\"\n}",
+							"raw": "{\n    \"username\": \"budi_teknisi\",\n    \"password\": \"password123\",\n    \"fullName\": \"Budi Santoso\",\n    \"role\": \"Teknisi\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -168,7 +250,7 @@
 								"users"
 							]
 						},
-						"description": "Membuat pengguna baru (Teknisi atau Admin)."
+						"description": "Membuat pengguna baru (Teknisi atau Admin). (Hanya SysAdmin)"
 					},
 					"response": []
 				},
@@ -186,7 +268,7 @@
 								"users"
 							]
 						},
-						"description": "Mendapatkan daftar semua pengguna."
+						"description": "Mendapatkan daftar semua pengguna. (Hanya SysAdmin)"
 					},
 					"response": []
 				},
@@ -244,7 +326,7 @@
 								}
 							]
 						},
-						"description": "Memperbarui nama lengkap atau peran pengguna."
+						"description": "Memperbarui nama lengkap atau peran pengguna. (Hanya SysAdmin)"
 					},
 					"response": []
 				}
@@ -252,7 +334,17 @@
 		},
 		{
 			"name": "Service Tickets",
-			"description": "Alur Kerja Utama: Manajemen Tiket Layanan",
+			"description": "Alur Kerja Utama: Manajemen Tiket Layanan (Protected: All Roles)",
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{authToken}}",
+						"type": "string"
+					}
+				]
+			},
 			"item": [
 				{
 					"name": "Create Ticket",
@@ -261,7 +353,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"customerName\": \"Andi\",\n    \"deviceInfo\": \"Laptop Dell XPS 15\",\n    \"initialComplaint\": \"Layar sering berkedip dan mati sendiri.\",\n    \"createdBy\": \"<GANTI_DENGAN_ID_USER_ADMIN>\"\n}",
+							"raw": "{\n    \"customerName\": \"Andi\",\n    \"deviceInfo\": \"Laptop Dell XPS 15\",\n    \"initialComplaint\": \"Layar sering berkedip dan mati sendiri.\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -277,7 +369,7 @@
 								"tickets"
 							]
 						},
-						"description": "Membuat tiket layanan baru."
+						"description": "Membuat tiket layanan baru. (Field 'createdBy' akan diambil otomatis dari token)"
 					},
 					"response": []
 				},
@@ -361,7 +453,7 @@
 								}
 							]
 						},
-						"description": "Mengalokasikan tiket ke seorang teknisi."
+						"description": "Mengalokasikan tiket ke seorang teknisi. (Hanya Admin/SysAdmin)"
 					},
 					"response": []
 				},
@@ -474,7 +566,17 @@
 		},
 		{
 			"name": "Knowledge Base",
-			"description": "Manajemen Basis Pengetahuan (KMS)",
+			"description": "Manajemen Basis Pengetahuan (KMS) (Protected)",
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{authToken}}",
+						"type": "string"
+					}
+				]
+			},
 			"item": [
 				{
 					"name": "Create Entry from Ticket",
@@ -498,7 +600,7 @@
 								}
 							]
 						},
-						"description": "Membuat draft entri KB secara otomatis dari tiket yang sudah 'Selesai'."
+						"description": "Membuat draft entri KB secara otomatis dari tiket yang sudah 'Selesai'. (Hanya Admin/SysAdmin)"
 					},
 					"response": []
 				},
@@ -516,7 +618,7 @@
 								"knowledge"
 							]
 						},
-						"description": "Melihat semua entri KB yang sudah dipublikasikan."
+						"description": "Melihat semua entri KB yang sudah dipublikasikan. (Semua user ter-login)"
 					},
 					"response": []
 				},
@@ -535,7 +637,7 @@
 								"drafts"
 							]
 						},
-						"description": "Melihat semua entri KB yang masih berupa draft."
+						"description": "Melihat semua entri KB yang masih berupa draft. (Hanya Admin/SysAdmin)"
 					},
 					"response": []
 				},
@@ -561,7 +663,7 @@
 								}
 							]
 						},
-						"description": "Mempublikasikan sebuah entri KB yang masih draft."
+						"description": "Mempublikasikan sebuah entri KB yang masih draft. (Hanya Admin/SysAdmin)"
 					},
 					"response": []
 				},
@@ -595,7 +697,17 @@
 		},
 		{
 			"name": "Reports",
-			"description": "Laporan dan Analitik Data",
+			"description": "Laporan dan Analitik Data (Protected: Admin/SysAdmin)",
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{authToken}}",
+						"type": "string"
+					}
+				]
+			},
 			"item": [
 				{
 					"name": "Ticket Summary",
@@ -673,12 +785,44 @@
 				"description": "Memeriksa status kesehatan dan informasi dasar dari service API."
 			},
 			"response": []
+		},
+		{
+			"name": "Test (DEV ONLY)",
+			"item": [
+				{
+					"name": "Reset Database",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:4000/api/test/reset-db",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"test",
+								"reset-db"
+							]
+						},
+						"description": "Menghapus semua data dari koleksi. Hanya untuk development."
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:4000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
 			"type": "string"
 		}
 	]

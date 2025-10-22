@@ -1,26 +1,34 @@
-// src/routes/v1/component.route.js
 const express = require("express");
-const componentController = require("../controllers/component.controller");
+// --- PERBAIKAN ---
+// Menggunakan barrel controllers dan middlewares
+const { componentController } = require("../controllers");
+const { protect, authorize } = require("../middlewares");
+// --- AKHIR PERBAIKAN ---
 
 const router = express.Router();
 
-router
-  .route("/")
-  .post(componentController.createComponent)
-  .get(componentController.getComponents);
+// Terapkan 'protect' ke SEMUA rute di file ini
+router.use(protect);
 
-router
-  .route("/:id")
-  .get(componentController.getComponent)
-  .put(componentController.updateComponent)
-  .delete(componentController.deleteComponent);
+// Rute di bawah ini bisa diakses oleh SEMUA ROLE yang sudah login
+router.get("/", componentController.getComponents);
+router.get("/:id", componentController.getComponent);
+
+// Rute di bawah ini HANYA bisa diakses oleh 'Admin' dan 'SysAdmin'
+router.post(
+  "/",
+  authorize(["Admin", "SysAdmin"]),
+  componentController.createComponent
+);
+router.put(
+  "/:id",
+  authorize(["Admin", "SysAdmin"]),
+  componentController.updateComponent
+);
+router.delete(
+  "/:id",
+  authorize(["Admin", "SysAdmin"]),
+  componentController.deleteComponent
+);
 
 module.exports = router;
-
-/**
- * @swagger
- * tags:
- *   name: Components
- *   description: Manajemen Katalog Komponen
- */
-// ... (Swagger docs akan ditambahkan nanti)

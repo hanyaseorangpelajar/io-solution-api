@@ -1,6 +1,5 @@
-// src/services/user.service.js
-const { User } = require("../models/user.model");
-const { ApiError } = require("../utils/ApiError");
+const { User } = require("../models");
+const { ApiError } = require("../utils");
 const httpStatus = require("http-status");
 
 /**
@@ -53,9 +52,24 @@ const updateUserById = async (userId, updateBody) => {
   return user;
 };
 
+/**
+ * Menghapus pengguna berdasarkan ID.
+ * @param {string} userId - ID Pengguna.
+ * @returns {Promise<void>}
+ */
+const deleteUserById = async (userId) => {
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
+  }
+  // Kita gunakan deleteOne() atau remove() pada instance Mongoose
+  await user.deleteOne(); // atau user.remove() tergantung versi Mongoose
+};
+
 module.exports = {
   createUser,
   getUsers,
   getUserById,
   updateUserById,
+  deleteUserById,
 };

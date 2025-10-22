@@ -1,21 +1,33 @@
-// src/routes/index.js
-const { Router } = require("express");
-const componentRoute = require("./component.route");
-const userRoute = require("./user.route");
-const serviceTicketRoute = require("./serviceTicket.route");
-const knowledgeEntryRoute = require("./knowledgeEntry.route");
-const reportRoute = require("./report.route");
-const healthRoute = require("./health.route");
-const testRoute = require("./test.route");
+const express = require("express");
 
-const router = Router();
+// Impor rute yang sudah ada
+const componentRoutes = require("./component.route");
+const healthRoutes = require("./health.route");
+const knowledgeEntryRoutes = require("./knowledgeEntry.route");
+const reportRoutes = require("./report.route");
+const serviceTicketRoutes = require("./serviceTicket.route");
+const userRoutes = require("./user.route");
+const testRoutes = require("./test.route");
 
-router.use("/components", componentRoute);
-router.use("/users", userRoute);
-router.use("/tickets", serviceTicketRoute);
-router.use("/knowledge", knowledgeEntryRoute);
-router.use("/reports", reportRoute);
-router.use("/health", healthRoute);
-componentRoute.route("/test", testRoute);
+// Impor rute auth yang BARU
+const authRoutes = require("./auth.route"); // <-- BARIS BARU
+
+const router = express.Router();
+
+// Daftarkan rute auth yang BARU
+router.use("/auth", authRoutes); // <-- BARIS BARU
+
+// Daftarkan rute-rute yang sudah ada
+router.use("/components", componentRoutes);
+router.use("/health", healthRoutes);
+router.use("/knowledge", knowledgeEntryRoutes);
+router.use("/reports", reportRoutes);
+router.use("/tickets", serviceTicketRoutes);
+router.use("/users", userRoutes);
+
+// Daftarkan rute tes (jika Anda masih menggunakannya)
+if (process.env.NODE_ENV !== "production") {
+  router.use("/test", testRoutes);
+}
 
 module.exports = router;

@@ -4,10 +4,7 @@ require("express-async-errors");
 
 // --- PERHATIKAN PERUBAHAN DI SINI ---
 // Kita gunakan destructuring { } untuk mengambil model dari ekspor
-const { User } = require("../models/user.model");
-const { ServiceTicket } = require("../models/serviceTicket.model");
-const { Component } = require("../models/component.model");
-const { KnowledgeEntry } = require("../models/knowledgeEntry.model");
+const { User, ServiceTicket, Component, KnowledgeEntry } = require("../models");
 // ------------------------------------
 
 /**

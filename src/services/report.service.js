@@ -1,5 +1,5 @@
 // src/services/report.service.js
-const { ServiceTicket } = require("../models/serviceTicket.model");
+const { ServiceTicket } = require("../models");
 const mongoose = require("mongoose");
 
 /**

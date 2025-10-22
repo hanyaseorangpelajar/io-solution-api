@@ -1,30 +1,42 @@
-// src/routes/v1/knowledgeEntry.route.js
 const express = require("express");
-const knowledgeEntryController = require("../controllers/knowledgeEntry.controller");
+// --- PERBAIKAN ---
+// Menggunakan barrel controllers dan middlewares
+const { knowledgeEntryController } = require("../controllers");
+const { protect, authorize } = require("../middlewares");
+
+// --- AKHIR PERBAIKAN ---
 
 const router = express.Router();
 
-router
-  .route("/")
-  .post(knowledgeEntryController.createKnowledgeEntry)
-  .get(knowledgeEntryController.getKnowledgeEntries);
+// Terapkan 'protect' ke SEMUA rute di file ini
+router.use(protect);
 
-router.route("/drafts").get(knowledgeEntryController.getDraftKnowledgeEntries);
+// GET bisa untuk semua role
+router.get("/", knowledgeEntryController.getKnowledgeEntries);
+router.get("/:id", knowledgeEntryController.getKnowledgeEntry);
 
-router
-  .route("/from-ticket/:ticketId")
-  .post(knowledgeEntryController.createFromTicket);
+// GET /drafts hanya untuk Admin/SysAdmin
+router.get(
+  "/drafts",
+  authorize(["Admin", "SysAdmin"]),
+  knowledgeEntryController.getDraftKnowledgeEntries
+);
 
-router.route("/:id").get(knowledgeEntryController.getKnowledgeEntry);
-
-router.route("/:id/publish").put(knowledgeEntryController.publishEntry);
+// POST dan PUT (create/publish) hanya untuk Admin/SysAdmin
+router.post(
+  "/",
+  authorize(["Admin", "SysAdmin"]),
+  knowledgeEntryController.createKnowledgeEntry
+);
+router.post(
+  "/from-ticket/:ticketId",
+  authorize(["Admin", "SysAdmin"]),
+  knowledgeEntryController.createFromTicket
+);
+router.put(
+  "/:id/publish",
+  authorize(["Admin", "SysAdmin"]),
+  knowledgeEntryController.publishEntry
+);
 
 module.exports = router;
-
-/**
- * @swagger
- * tags:
- *   name: KnowledgeBase
- *   description: Manajemen Basis Pengetahuan (KMS)
- */
-// ... (Swagger docs akan ditambahkan nanti)

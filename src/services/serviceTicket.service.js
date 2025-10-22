@@ -1,11 +1,11 @@
-// src/services/serviceTicket.service.js
 const {
   ServiceTicket,
   TICKET_STATUSES,
-} = require("../models/serviceTicket.model");
-const { User, ROLES } = require("../models/user.model");
-const { Component } = require("../models/component.model");
-const { ApiError } = require("../utils/ApiError");
+  User,
+  ROLES,
+  Component,
+} = require("../models");
+const { ApiError } = require("../utils");
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
 

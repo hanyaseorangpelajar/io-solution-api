@@ -1,7 +1,6 @@
 // src/services/knowledgeEntry.service.js
-const { KnowledgeEntry } = require("../models/knowledgeEntry.model");
-const { ServiceTicket } = require("../models/serviceTicket.model");
-const { ApiError } = require("../utils/ApiError");
+const { KnowledgeEntry, ServiceTicket } = require("../models");
+const { ApiError } = require("../utils");
 const httpStatus = require("http-status");
 
 /**

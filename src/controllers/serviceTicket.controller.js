@@ -1,43 +1,54 @@
-// src/controllers/serviceTicket.controller.js
 const httpStatus = require("http-status");
-const { serviceTicketService } = require("../services");
-const { catchAsync } = require("../utils/catchAsync");
-const { ApiError } = require("../utils/ApiError");
-const { TICKET_STATUSES } = require("../models/serviceTicket.model");
 
-const createTicket = catchAsync(async (req, res) => {
-  // req.body.createdBy diharapkan berisi ID Admin yang membuat tiket
-  const ticket = await serviceTicketService.createServiceTicket(req.body);
+// --- PERBAIKAN ---
+const {
+  createServiceTicket,
+  queryServiceTickets,
+  getServiceTicketById,
+  assignTicket,
+  addDiagnosis,
+  addAction,
+  updateTicketStatus,
+} = require("../services");
+const { catchAsync, ApiError } = require("../utils");
+// Menggunakan barrel models
+const { TICKET_STATUSES } = require("../models");
+// --- AKHIR PERBAIKAN ---
+
+const createTicketController = catchAsync(async (req, res) => {
+  // Tambahkan createdBy dari user yang terotentikasi
+  const ticketBody = { ...req.body, createdBy: req.user.id };
+  const ticket = await createServiceTicket(ticketBody);
   res.status(httpStatus.CREATED).send(ticket);
 });
 
-const getTickets = catchAsync(async (req, res) => {
+const getTicketsController = catchAsync(async (req, res) => {
   const filter = {};
   if (req.query.status) {
     filter.status = req.query.status;
   }
-  const result = await serviceTicketService.queryServiceTickets(filter);
+  const result = await queryServiceTickets(filter);
   res.send(result);
 });
 
-const getTicket = catchAsync(async (req, res) => {
-  const ticket = await serviceTicketService.getServiceTicketById(req.params.id);
+const getTicketController = catchAsync(async (req, res) => {
+  const ticket = await getServiceTicketById(req.params.id);
   if (!ticket) {
     throw new ApiError(httpStatus.NOT_FOUND, "Tiket tidak ditemukan");
   }
   res.send(ticket);
 });
 
-const assignTicket = catchAsync(async (req, res) => {
-  const { userId } = req.body; // ID Teknisi
+const assignTicketController = catchAsync(async (req, res) => {
+  const { userId } = req.body;
   if (!userId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "ID Teknisi wajib diisi");
   }
-  const ticket = await serviceTicketService.assignTicket(req.params.id, userId);
+  const ticket = await assignTicket(req.params.id, userId);
   res.send(ticket);
 });
 
-const addDiagnosis = catchAsync(async (req, res) => {
+const addDiagnosisController = catchAsync(async (req, res) => {
   const { symptom, diagnosis } = req.body;
   if (!symptom || !diagnosis) {
     throw new ApiError(
@@ -45,14 +56,14 @@ const addDiagnosis = catchAsync(async (req, res) => {
       "Gejala dan diagnosis wajib diisi"
     );
   }
-  const ticket = await serviceTicketService.addDiagnosis(req.params.id, {
+  const ticket = await addDiagnosis(req.params.id, {
     symptom,
     diagnosis,
   });
   res.send(ticket);
 });
 
-const addAction = catchAsync(async (req, res) => {
+const addActionController = catchAsync(async (req, res) => {
   const { actionTaken, componentsUsed } = req.body;
   if (!actionTaken) {
     throw new ApiError(
@@ -60,7 +71,6 @@ const addAction = catchAsync(async (req, res) => {
       "Deskripsi tindakan wajib diisi"
     );
   }
-  // componentsUsed bisa kosong, tapi jika ada, harus array
   if (componentsUsed && !Array.isArray(componentsUsed)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -68,14 +78,14 @@ const addAction = catchAsync(async (req, res) => {
     );
   }
 
-  const ticket = await serviceTicketService.addAction(req.params.id, {
+  const ticket = await addAction(req.params.id, {
     actionTaken,
     componentsUsed: componentsUsed || [],
   });
   res.send(ticket);
 });
 
-const updateTicketStatus = catchAsync(async (req, res) => {
+const updateTicketStatusController = catchAsync(async (req, res) => {
   const { status } = req.body;
   if (!status) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Status baru wajib diisi");
@@ -87,19 +97,16 @@ const updateTicketStatus = catchAsync(async (req, res) => {
     );
   }
 
-  const ticket = await serviceTicketService.updateTicketStatus(
-    req.params.id,
-    status
-  );
+  const ticket = await updateTicketStatus(req.params.id, status);
   res.send(ticket);
 });
 
 module.exports = {
-  createTicket,
-  getTickets,
-  getTicket,
-  assignTicket,
-  addDiagnosis,
-  addAction,
-  updateTicketStatus,
+  createTicket: createTicketController,
+  getTickets: getTicketsController,
+  getTicket: getTicketController,
+  assignTicket: assignTicketController,
+  addDiagnosis: addDiagnosisController,
+  addAction: addActionController,
+  updateTicketStatus: updateTicketStatusController,
 };

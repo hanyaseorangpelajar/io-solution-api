@@ -1,6 +1,5 @@
-// src/services/component.service.js
-const { Component } = require("../models/component.model");
-const { ApiError } = require("../utils/ApiError");
+const { Component } = require("../models");
+const { ApiError } = require("../utils");
 const httpStatus = require("http-status");
 
 /**

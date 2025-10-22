@@ -1,25 +1,31 @@
-// src/controllers/report.controller.js
 const httpStatus = require("http-status");
-const { reportService } = require("../services");
-const { catchAsync } = require("../utils/catchAsync");
 
-const getTicketSummary = catchAsync(async (req, res) => {
-  const summary = await reportService.getTicketSummary();
+// --- PERBAIKAN ---
+const {
+  getTicketSummary,
+  getComponentUsage,
+  getCommonIssues,
+} = require("../services");
+const { catchAsync } = require("../utils");
+// --- AKHIR PERBAIKAN ---
+
+const getTicketSummaryController = catchAsync(async (req, res) => {
+  const summary = await getTicketSummary();
   res.send(summary);
 });
 
-const getComponentUsage = catchAsync(async (req, res) => {
-  const usage = await reportService.getComponentUsage();
+const getComponentUsageController = catchAsync(async (req, res) => {
+  const usage = await getComponentUsage();
   res.send(usage);
 });
 
-const getCommonIssues = catchAsync(async (req, res) => {
-  const issues = await reportService.getCommonIssues();
+const getCommonIssuesController = catchAsync(async (req, res) => {
+  const issues = await getCommonIssues();
   res.send(issues);
 });
 
 module.exports = {
-  getTicketSummary,
-  getComponentUsage,
-  getCommonIssues,
+  getTicketSummary: getTicketSummaryController,
+  getComponentUsage: getComponentUsageController,
+  getCommonIssues: getCommonIssuesController,
 };

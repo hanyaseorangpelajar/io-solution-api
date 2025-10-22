@@ -1,30 +1,37 @@
 const httpStatus = require("http-status");
-const { componentService } = require("../services");
-const { catchAsync } = require("../utils/catchAsync");
-const { ApiError } = require("../utils/ApiError");
 
-const createComponent = catchAsync(async (req, res) => {
-  const component = await componentService.createComponent(req.body);
+// --- PERBAIKAN ---
+// Impor fungsi langsung dari barrel services dan utils
+const {
+  createComponent,
+  getComponents,
+  getComponentById,
+  updateComponentById,
+  deleteComponentById,
+} = require("../services");
+const { catchAsync, ApiError } = require("../utils");
+// --- AKHIR PERBAIKAN ---
+
+const createComponentController = catchAsync(async (req, res) => {
+  const component = await createComponent(req.body);
   res.status(httpStatus.CREATED).send(component);
 });
 
-const getComponents = catchAsync(async (req, res) => {
-  // Di masa depan, Anda bisa menambahkan filter dari req.query
+const getComponentsController = catchAsync(async (req, res) => {
   const filter = {};
-  const result = await componentService.getComponents(filter);
+  const result = await getComponents(filter);
   res.send(result);
 });
 
-const getComponent = catchAsync(async (req, res) => {
-  const component = await componentService.getComponentById(req.params.id);
+const getComponentController = catchAsync(async (req, res) => {
+  const component = await getComponentById(req.params.id);
   if (!component) {
     throw new ApiError(httpStatus.NOT_FOUND, "Komponen tidak ditemukan");
   }
   res.send(component);
 });
 
-const updateComponent = catchAsync(async (req, res) => {
-  // Hanya izinkan update stok dan harga untuk endpoint ini
+const updateComponentController = catchAsync(async (req, res) => {
   const allowedUpdates = ["stock", "price"];
   const updates = Object.keys(req.body);
   const isValidOperation = updates.every((update) =>
@@ -38,23 +45,19 @@ const updateComponent = catchAsync(async (req, res) => {
     );
   }
 
-  const component = await componentService.updateComponentById(
-    req.params.id,
-    req.body
-  );
+  const component = await updateComponentById(req.params.id, req.body);
   res.send(component);
 });
 
-const deleteComponent = catchAsync(async (req, res) => {
-  await componentService.deleteComponentById(req.params.id);
-  // 204 No Content, menandakan berhasil tapi tidak ada body respons
+const deleteComponentController = catchAsync(async (req, res) => {
+  await deleteComponentById(req.params.id);
   res.status(httpStatus.NO_CONTENT).send();
 });
 
 module.exports = {
-  createComponent,
-  getComponents,
-  getComponent,
-  updateComponent,
-  deleteComponent,
+  createComponent: createComponentController,
+  getComponents: getComponentsController,
+  getComponent: getComponentController,
+  updateComponent: updateComponentController,
+  deleteComponent: deleteComponentController,
 };

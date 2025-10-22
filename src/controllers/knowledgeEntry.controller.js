@@ -1,55 +1,53 @@
-// src/controllers/knowledgeEntry.controller.js
 const httpStatus = require("http-status");
-const { knowledgeEntryService } = require("../services");
-const { catchAsync } = require("../utils/catchAsync");
-const { ApiError } = require("../utils/ApiError");
 
-const createKnowledgeEntry = catchAsync(async (req, res) => {
-  const entry = await knowledgeEntryService.createKnowledgeEntry(req.body);
+// --- PERBAIKAN ---
+const {
+  createKnowledgeEntry,
+  createKnowledgeEntryFromTicket,
+  queryKnowledgeEntries,
+  getKnowledgeEntryById,
+  publishKnowledgeEntry,
+} = require("../services");
+const { catchAsync, ApiError } = require("../utils");
+// --- AKHIR PERBAIKAN ---
+
+const createKnowledgeEntryController = catchAsync(async (req, res) => {
+  const entry = await createKnowledgeEntry(req.body);
   res.status(httpStatus.CREATED).send(entry);
 });
 
-const createFromTicket = catchAsync(async (req, res) => {
-  const entry = await knowledgeEntryService.createKnowledgeEntryFromTicket(
-    req.params.ticketId
-  );
+const createFromTicketController = catchAsync(async (req, res) => {
+  const entry = await createKnowledgeEntryFromTicket(req.params.ticketId);
   res.status(httpStatus.CREATED).send(entry);
 });
 
-const getKnowledgeEntries = catchAsync(async (req, res) => {
-  // Hanya ambil yang sudah di-publish
+const getKnowledgeEntriesController = catchAsync(async (req, res) => {
   const filter = { isPublished: true };
-  // Di masa depan, bisa ditambahkan filter pencarian dari req.query
-  const result = await knowledgeEntryService.queryKnowledgeEntries(filter);
+  const result = await queryKnowledgeEntries(filter);
   res.send(result);
 });
 
-const getDraftKnowledgeEntries = catchAsync(async (req, res) => {
-  // Hanya ambil yang belum di-publish (draft)
+const getDraftKnowledgeEntriesController = catchAsync(async (req, res) => {
   const filter = { isPublished: false };
-  const result = await knowledgeEntryService.queryKnowledgeEntries(filter);
+  const result = await queryKnowledgeEntries(filter);
   res.send(result);
 });
 
-const getKnowledgeEntry = catchAsync(async (req, res) => {
-  const entry = await knowledgeEntryService.getKnowledgeEntryById(
-    req.params.id
-  );
+const getKnowledgeEntryController = catchAsync(async (req, res) => {
+  const entry = await getKnowledgeEntryById(req.params.id);
   res.send(entry);
 });
 
-const publishEntry = catchAsync(async (req, res) => {
-  const entry = await knowledgeEntryService.publishKnowledgeEntry(
-    req.params.id
-  );
+const publishEntryController = catchAsync(async (req, res) => {
+  const entry = await publishKnowledgeEntry(req.params.id);
   res.send(entry);
 });
 
 module.exports = {
-  createKnowledgeEntry,
-  createFromTicket,
-  getKnowledgeEntries,
-  getDraftKnowledgeEntries,
-  getKnowledgeEntry,
-  publishEntry,
+  createKnowledgeEntry: createKnowledgeEntryController,
+  createFromTicket: createFromTicketController,
+  getKnowledgeEntries: getKnowledgeEntriesController,
+  getDraftKnowledgeEntries: getDraftKnowledgeEntriesController,
+  getKnowledgeEntry: getKnowledgeEntryController,
+  publishEntry: publishEntryController,
 };
