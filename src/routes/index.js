@@ -1,31 +1,24 @@
+const authRoutes = require("./auth.route");
 const express = require("express");
-
-// Impor rute yang sudah ada
-const componentRoutes = require("./component.route");
 const healthRoutes = require("./health.route");
 const knowledgeEntryRoutes = require("./knowledgeEntry.route");
+const partRoutes = require("./part.route");
 const reportRoutes = require("./report.route");
-const serviceTicketRoutes = require("./serviceTicket.route");
-const userRoutes = require("./user.route");
-const testRoutes = require("./test.route");
-
-// Impor rute auth yang BARU
-const authRoutes = require("./auth.route"); // <-- BARIS BARU
-
+const rmaRecordRoutes = require("./rmaRecord.route");
 const router = express.Router();
+const serviceTicketRoutes = require("./serviceTicket.route");
+const testRoutes = require("./test.route");
+const userRoutes = require("./user.route");
 
-// Daftarkan rute auth yang BARU
-router.use("/auth", authRoutes); // <-- BARIS BARU
-
-// Daftarkan rute-rute yang sudah ada
-router.use("/components", componentRoutes);
+router.use("/auth", authRoutes);
 router.use("/health", healthRoutes);
 router.use("/knowledge", knowledgeEntryRoutes);
+router.use("/parts", partRoutes);
 router.use("/reports", reportRoutes);
+router.use("/rma", rmaRecordRoutes);
 router.use("/tickets", serviceTicketRoutes);
 router.use("/users", userRoutes);
 
-// Daftarkan rute tes (jika Anda masih menggunakannya)
 if (process.env.NODE_ENV !== "production") {
   router.use("/test", testRoutes);
 }

@@ -2,10 +2,7 @@ const express = require("express");
 const router = express.Router();
 require("express-async-errors");
 
-// --- PERHATIKAN PERUBAHAN DI SINI ---
-// Kita gunakan destructuring { } untuk mengambil model dari ekspor
 const { User, ServiceTicket, Component, KnowledgeEntry } = require("../models");
-// ------------------------------------
 
 /**
  * @route   POST /api/test/reset-db
@@ -20,12 +17,8 @@ router.post("/reset-db", async (req, res) => {
   }
 
   try {
-    // Array untuk menampung hasil
     const results = {};
 
-    // Hapus semua dokumen dari setiap koleksi
-    // Kode ini sekarang akan berfungsi karena variabel User, ServiceTicket, dll.
-    // adalah model Mongoose yang sebenarnya.
     if (User) {
       const userRes = await User.deleteMany({});
       results.users = `${userRes.deletedCount} dihapus`;

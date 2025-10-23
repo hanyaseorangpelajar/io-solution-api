@@ -1,108 +1,188 @@
-// src/services/report.service.js
-const { ServiceTicket } = require("../models");
+const {
+  ServiceTicket,
+  Part,
+  StockMovement,
+  TICKET_STATUSES,
+  TICKET_PRIORITIES,
+} = require("../models");
 const mongoose = require("mongoose");
 
 /**
- * Menghasilkan ringkasan laporan tiket.
- * @returns {Promise<Object>}
+ * Menghasilkan ringkasan laporan tiket per bulan, sesuai format TicketAgg.
+ * @returns {Promise<TicketAgg[]>}
  */
-const getTicketSummary = async () => {
-  const ticketsByStatus = await ServiceTicket.aggregate([
-    {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 },
-      },
-    },
+const getTicketSummaryMonthly = async () => {
+  const results = await ServiceTicket.aggregate([
     {
       $project: {
-        _id: 0,
-        status: "$_id",
-        count: 1,
+        year: { $year: "$createdAt" },
+        month: { $month: "$createdAt" },
+        status: 1,
+        priority: 1,
+        isResolved: { $in: ["$status", ["Selesai", "Ditutup"]] },
       },
     },
-    { $sort: { count: -1 } },
-  ]);
-
-  const ticketsByTechnician = await ServiceTicket.aggregate([
-    { $match: { assignedTo: { $ne: null } } },
     {
       $group: {
-        _id: "$assignedTo",
-        count: { $sum: 1 },
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "_id",
-        foreignField: "_id",
-        as: "technicianInfo",
-      },
-    },
-    { $unwind: "$technicianInfo" },
-    {
-      $project: {
-        _id: 0,
-        technician: {
-          id: "$technicianInfo._id",
-          username: "$technicianInfo.username",
-          fullName: "$technicianInfo.fullName",
+        _id: {
+          year: "$year",
+          month: "$month",
         },
-        ticketCount: "$count",
+        created: { $sum: 1 },
+        resolved: { $sum: { $cond: ["$isResolved", 1, 0] } },
+        statuses: { $push: "$status" },
+        priorities: { $push: "$priority" },
       },
     },
-    { $sort: { ticketCount: -1 } },
+    {
+      $project: {
+        _id: 0,
+        month: {
+          $concat: [
+            { $toString: "$_id.year" },
+            "-",
+            { $toString: "$_id.month" },
+          ],
+        },
+        created: 1,
+        resolved: 1,
+        byStatus: {
+          $arrayToObject: {
+            $map: {
+              input: TICKET_STATUSES,
+              as: "status",
+              in: {
+                k: "$$status",
+                v: {
+                  $size: {
+                    $filter: {
+                      input: "$statuses",
+                      cond: { $eq: ["$$this", "$$status"] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        byPriority: {
+          $arrayToObject: {
+            $map: {
+              input: TICKET_PRIORITIES,
+              as: "priority",
+              in: {
+                k: "$$priority",
+                v: {
+                  $size: {
+                    $filter: {
+                      input: "$priorities",
+                      cond: { $eq: ["$$this", "$$priority"] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    { $sort: { month: -1 } },
   ]);
 
-  const totalTickets = await ServiceTicket.countDocuments();
+  return results;
+};
+
+/**
+ * Menghasilkan ringkasan laporan inventaris, sesuai format InventoryAgg.
+ * @returns {Promise<InventoryAgg>}
+ */
+const getInventorySummary = async () => {
+  const stockByCategoryAgg = await Part.aggregate([
+    { $match: { status: "active" } },
+    {
+      $group: {
+        _id: "$category",
+        totalStock: { $sum: "$stock" },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        k: { $ifNull: ["$_id", "Uncategorized"] },
+        v: "$totalStock",
+      },
+    },
+    { $sort: { k: 1 } },
+  ]);
+  const byCategory = stockByCategoryAgg.reduce((acc, item) => {
+    acc[item.k] = item.v;
+    return acc;
+  }, {});
+
+  const movementsInAgg = await StockMovement.aggregate([
+    { $match: { type: "in" } },
+    {
+      $group: {
+        _id: null,
+        totalIn: { $sum: "$quantity" },
+      },
+    },
+  ]);
+  const movementsIn = movementsInAgg.length > 0 ? movementsInAgg[0].totalIn : 0;
+
+  const movementsOutAgg = await StockMovement.aggregate([
+    { $match: { type: "out" } },
+    {
+      $group: {
+        _id: null,
+        totalOut: { $sum: "$quantity" },
+      },
+    },
+  ]);
+  const movementsOut =
+    movementsOutAgg.length > 0 ? movementsOutAgg[0].totalOut : 0;
 
   return {
-    totalTickets,
-    byStatus: ticketsByStatus,
-    byTechnician: ticketsByTechnician,
+    byCategory,
+    movementsIn,
+    movementsOut,
   };
 };
 
 /**
- * Menghasilkan laporan penggunaan komponen.
+ * Menghasilkan laporan penggunaan part (dari tiket).
  * @returns {Promise<Object[]>}
  */
-const getComponentUsage = async () => {
+const getPartUsageFromTickets = async () => {
   return ServiceTicket.aggregate([
-    // 1. Deconstruct the actions array
+    { $match: { "actions.componentsUsed": { $exists: true, $ne: [] } } },
     { $unwind: "$actions" },
-    // 2. Deconstruct the componentsUsed array
     { $unwind: "$actions.componentsUsed" },
-    // 3. Group by component ID and sum the quantity
     {
       $group: {
         _id: "$actions.componentsUsed.component",
         totalQuantityUsed: { $sum: "$actions.componentsUsed.quantity" },
       },
     },
-    // 4. Lookup component details
     {
       $lookup: {
-        from: "components",
+        from: "parts",
         localField: "_id",
         foreignField: "_id",
-        as: "componentInfo",
+        as: "partInfo",
       },
     },
-    // 5. Deconstruct the componentInfo array
-    { $unwind: "$componentInfo" },
-    // 6. Project to the final shape
+    { $match: { partInfo: { $ne: [] } } },
+    { $unwind: "$partInfo" },
     {
       $project: {
         _id: 0,
-        componentId: "$_id",
-        name: "$componentInfo.name",
-        type: "$componentInfo.type",
+        partId: "$_id",
+        name: "$partInfo.name",
+        category: "$partInfo.category",
         totalQuantityUsed: 1,
       },
     },
-    // 7. Sort by the most used
     { $sort: { totalQuantityUsed: -1 } },
   ]);
 };
@@ -113,20 +193,22 @@ const getComponentUsage = async () => {
  */
 const getCommonIssues = async () => {
   return ServiceTicket.aggregate([
+    { $match: { initialComplaint: { $ne: null, $ne: "" } } },
     {
       $group: {
-        _id: { $toLower: "$initialComplaint" }, // Group by complaint, case-insensitive
+        _id: { $toLower: "$initialComplaint" },
         count: { $sum: 1 },
       },
     },
     { $sort: { count: -1 } },
-    { $limit: 20 }, // Batasi hingga 20 masalah paling umum
+    { $limit: 20 },
     { $project: { _id: 0, complaint: "$_id", occurrences: "$count" } },
   ]);
 };
 
 module.exports = {
-  getTicketSummary,
-  getComponentUsage,
+  getTicketSummaryMonthly,
+  getInventorySummary,
+  getPartUsageFromTickets,
   getCommonIssues,
 };

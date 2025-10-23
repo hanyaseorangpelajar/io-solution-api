@@ -1,6 +1,5 @@
 const httpStatus = require("http-status");
 
-// --- PERBAIKAN ---
 const {
   createUser,
   getUsers,
@@ -8,9 +7,7 @@ const {
   updateUserById,
 } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
-// Menggunakan barrel models
 const { ROLES } = require("../models");
-// --- AKHIR PERBAIKAN ---
 
 const createUserController = catchAsync(async (req, res) => {
   const user = await createUser(req.body);
@@ -57,9 +54,7 @@ const updateUserController = catchAsync(async (req, res) => {
 });
 
 const deleteUserController = catchAsync(async (req, res) => {
-  // Panggil service untuk menghapus user berdasarkan ID dari parameter rute
   await deleteUserById(req.params.id);
-  // Kirim respons 204 No Content (standar untuk DELETE yang sukses)
   res.status(httpStatus.NO_CONTENT).send();
 });
 

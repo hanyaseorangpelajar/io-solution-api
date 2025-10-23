@@ -43,7 +43,6 @@ const updateUserById = async (userId, updateBody) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
   }
-  // Mencegah perubahan username jika ada di updateBody
   if (updateBody.username && updateBody.username !== user.username) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Username tidak dapat diubah");
   }
@@ -62,8 +61,7 @@ const deleteUserById = async (userId) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
   }
-  // Kita gunakan deleteOne() atau remove() pada instance Mongoose
-  await user.deleteOne(); // atau user.remove() tergantung versi Mongoose
+  await user.deleteOne();
 };
 
 module.exports = {

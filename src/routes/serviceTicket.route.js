@@ -1,17 +1,11 @@
 const express = require("express");
-// --- PERBAIKAN ---
-// Menggunakan barrel controllers dan middlewares
 const { serviceTicketController } = require("../controllers");
 const { protect } = require("../middlewares");
-// --- AKHIR PERBAIKAN ---
 
 const router = express.Router();
 
-// Tiket bisa diakses oleh SEMUA ROLE yang sudah login
-// Terapkan 'protect' ke SEMUA rute di file ini
 router.use(protect);
 
-// Rute-rute ini sekarang otomatis terproteksi
 router
   .route("/")
   .post(serviceTicketController.createTicket)

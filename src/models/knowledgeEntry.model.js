@@ -1,4 +1,3 @@
-// src/models/knowledgeEntry.model.js
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
@@ -41,7 +40,6 @@ const KnowledgeEntrySchema = new Schema(
   { timestamps: true }
 );
 
-// --- BARIS INI DIUBAH ---
 const KnowledgeEntry =
   mongoose.models.KnowledgeEntry ||
   mongoose.model("KnowledgeEntry", KnowledgeEntrySchema);

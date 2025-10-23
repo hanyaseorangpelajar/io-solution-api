@@ -1,6 +1,5 @@
 const httpStatus = require("http-status");
 
-// --- PERBAIKAN ---
 const {
   createServiceTicket,
   queryServiceTickets,
@@ -11,12 +10,9 @@ const {
   updateTicketStatus,
 } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
-// Menggunakan barrel models
 const { TICKET_STATUSES } = require("../models");
-// --- AKHIR PERBAIKAN ---
 
 const createTicketController = catchAsync(async (req, res) => {
-  // Tambahkan createdBy dari user yang terotentikasi
   const ticketBody = { ...req.body, createdBy: req.user.id };
   const ticket = await createServiceTicket(ticketBody);
   res.status(httpStatus.CREATED).send(ticket);

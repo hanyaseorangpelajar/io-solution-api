@@ -1,4 +1,3 @@
-// src/app.js
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -9,7 +8,6 @@ require("express-async-errors");
 const routesV1 = require("./routes");
 const { notFound, errorHandler } = require("./middlewares/error");
 
-// <-- BARIS BARU: Impor rute untuk testing
 const testRoutes = require("./routes/test.route");
 
 const app = express();
@@ -34,8 +32,6 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1", routesV1);
 
-// <-- BARIS BARU: Daftarkan rute testing HANYA jika tidak di production
-// Ini akan membuat endpoint /api/test/reset-db aktif
 if (process.env.NODE_ENV !== "production") {
   app.use("/api/test", testRoutes);
   console.log(

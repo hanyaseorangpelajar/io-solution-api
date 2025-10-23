@@ -1,9 +1,6 @@
-// --- PERBAIKAN ---
-// Menggunakan barrel services, models, dan utils
-const { verifyToken } = require("../services"); // Cukup verifyToken
+const { verifyToken } = require("../services");
 const { User } = require("../models");
-const { ApiError, catchAsync } = require("../utils"); // Impor dari barrel utils
-// --- AKHIR PERBAIKAN ---
+const { ApiError, catchAsync } = require("../utils");
 
 /**
  * Middleware untuk memverifikasi token JWT (Autentikasi)
@@ -23,7 +20,7 @@ const protect = catchAsync(async (req, res, next) => {
   }
 
   try {
-    const payload = await verifyToken(token); // Panggil fungsi langsung
+    const payload = await verifyToken(token);
     const user = await User.findById(payload.sub);
 
     if (!user) {
@@ -33,7 +30,6 @@ const protect = catchAsync(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    // Tangkap error dari verifyToken juga
     throw new ApiError(
       401,
       error.message || "Token tidak valid atau kedaluwarsa."

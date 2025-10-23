@@ -1,6 +1,5 @@
 const httpStatus = require("http-status");
 
-// --- PERBAIKAN ---
 const {
   createKnowledgeEntry,
   createKnowledgeEntryFromTicket,
@@ -9,7 +8,6 @@ const {
   publishKnowledgeEntry,
 } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
-// --- AKHIR PERBAIKAN ---
 
 const createKnowledgeEntryController = catchAsync(async (req, res) => {
   const entry = await createKnowledgeEntry(req.body);

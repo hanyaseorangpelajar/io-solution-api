@@ -1,4 +1,3 @@
-// src/utils/diff.js
 function diffFields(before = {}, after = {}, allowKeys = []) {
   const changed = {};
   const keys = allowKeys.length

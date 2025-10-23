@@ -15,7 +15,6 @@ const mongoose = require("mongoose");
  * @returns {Promise<ServiceTicket>}
  */
 const createServiceTicket = async (ticketBody) => {
-  // Pastikan createdBy adalah user yang valid (misal: Admin)
   const createdByUser = await User.findById(ticketBody.createdBy);
   if (!createdByUser) {
     throw new ApiError(
@@ -23,7 +22,6 @@ const createServiceTicket = async (ticketBody) => {
       "User pembuat (createdBy) tidak ditemukan."
     );
   }
-  // Di masa depan, bisa ditambahkan validasi role createdBy (misal: hanya Admin yang bisa membuat)
 
   return ServiceTicket.create(ticketBody);
 };
@@ -35,9 +33,9 @@ const createServiceTicket = async (ticketBody) => {
  */
 const queryServiceTickets = async (filter) => {
   const tickets = await ServiceTicket.find(filter)
-    .populate("assignedTo", "username fullName role") // Hanya ambil field tertentu dari User
+    .populate("assignedTo", "username fullName role")
     .populate("createdBy", "username fullName role")
-    .sort({ createdAt: -1 }); // Urutkan dari yang terbaru
+    .sort({ createdAt: -1 });
   return tickets;
 };
 
@@ -50,7 +48,7 @@ const getServiceTicketById = async (id) => {
   const ticket = await ServiceTicket.findById(id)
     .populate("assignedTo", "username fullName role")
     .populate("createdBy", "username fullName role")
-    .populate("actions.componentsUsed.component", "name type price"); // Populate komponen yang digunakan
+    .populate("actions.componentsUsed.component", "name type price");
   return ticket;
 };
 
@@ -68,7 +66,6 @@ const assignTicket = async (ticketId, userId) => {
 
   const technician = await User.findById(userId);
   if (!technician || technician.role !== ROLES[0]) {
-    // ROLES[0] adalah 'Teknisi'
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       "User tidak ditemukan atau bukan Teknisi"
@@ -76,7 +73,7 @@ const assignTicket = async (ticketId, userId) => {
   }
 
   ticket.assignedTo = technician._id;
-  ticket.status = "Dialokasikan"; // Otomatis ubah status
+  ticket.status = "Dialokasikan";
   await ticket.save();
   return ticket;
 };
@@ -110,11 +107,6 @@ const addAction = async (ticketId, actionBody) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Tiket tidak ditemukan");
   }
 
-  // --- Validasi dan Kurangi Stok Komponen ---
-  // Ini adalah operasi yang idealnya dilakukan dalam transaksi untuk memastikan atomicity.
-  // Jika Anda menggunakan MongoDB replica set, pertimbangkan untuk menggunakan `session`
-  // untuk transaksi multi-dokumen. Untuk kesederhanaan, kita akan melakukan ini secara berurutan.
-
   for (const item of actionBody.componentsUsed) {
     const component = await Component.findById(item.component);
     if (!component) {
@@ -129,7 +121,6 @@ const addAction = async (ticketId, actionBody) => {
         `Stok komponen '${component.name}' tidak cukup. Tersedia: ${component.stock}, Diminta: ${item.quantity}`
       );
     }
-    // Kurangi stok
     component.stock -= item.quantity;
     await component.save();
   }

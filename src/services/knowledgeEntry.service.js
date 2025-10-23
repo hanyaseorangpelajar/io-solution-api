@@ -1,4 +1,3 @@
-// src/services/knowledgeEntry.service.js
 const { KnowledgeEntry, ServiceTicket } = require("../models");
 const { ApiError } = require("../utils");
 const httpStatus = require("http-status");
@@ -9,7 +8,6 @@ const httpStatus = require("http-status");
  * @returns {Promise<KnowledgeEntry>}
  */
 const createKnowledgeEntry = async (entryBody) => {
-  // Pastikan sourceTicket valid jika diberikan
   if (entryBody.sourceTicket) {
     const ticketExists = await ServiceTicket.findById(entryBody.sourceTicket);
     if (!ticketExists) {
@@ -41,7 +39,6 @@ const createKnowledgeEntryFromTicket = async (ticketId) => {
     );
   }
 
-  // Cek apakah sudah ada KB dari tiket ini
   const existingEntry = await KnowledgeEntry.findOne({
     sourceTicket: ticketId,
   });
@@ -52,7 +49,6 @@ const createKnowledgeEntryFromTicket = async (ticketId) => {
     );
   }
 
-  // Gabungkan data dari tiket untuk membuat entri baru
   const diagnosisSummary = ticket.diagnostics
     .map((d) => d.diagnosis)
     .join("\n");
@@ -72,7 +68,7 @@ const createKnowledgeEntryFromTicket = async (ticketId) => {
     solution: solutionSummary || "Tidak ada tindakan rinci.",
     relatedComponents,
     sourceTicket: ticket._id,
-    isPublished: false, // Selalu jadi draft dulu
+    isPublished: false,
   };
 
   return KnowledgeEntry.create(newEntryData);

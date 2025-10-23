@@ -1,21 +1,24 @@
 const httpStatus = require("http-status");
-
-// --- PERBAIKAN ---
 const {
-  getTicketSummary,
-  getComponentUsage,
+  getTicketSummaryMonthly,
+  getInventorySummary,
+  getPartUsageFromTickets,
   getCommonIssues,
 } = require("../services");
 const { catchAsync } = require("../utils");
-// --- AKHIR PERBAIKAN ---
 
 const getTicketSummaryController = catchAsync(async (req, res) => {
-  const summary = await getTicketSummary();
+  const summary = await getTicketSummaryMonthly();
   res.send(summary);
 });
 
-const getComponentUsageController = catchAsync(async (req, res) => {
-  const usage = await getComponentUsage();
+const getInventorySummaryController = catchAsync(async (req, res) => {
+  const summary = await getInventorySummary();
+  res.send(summary);
+});
+
+const getPartUsageController = catchAsync(async (req, res) => {
+  const usage = await getPartUsageFromTickets();
   res.send(usage);
 });
 
@@ -26,6 +29,7 @@ const getCommonIssuesController = catchAsync(async (req, res) => {
 
 module.exports = {
   getTicketSummary: getTicketSummaryController,
-  getComponentUsage: getComponentUsageController,
+  getInventorySummary: getInventorySummaryController,
+  getPartUsage: getPartUsageController,
   getCommonIssues: getCommonIssuesController,
 };

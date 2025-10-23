@@ -1,43 +1,65 @@
 const { User } = require("../models");
 const tokenService = require("./token.service");
 const { ApiError } = require("../utils");
+const httpStatus = require("http-status");
 
 /**
  * Registrasi pengguna baru
- * @param {object} userBody - Data pengguna (username, password, fullName, role)
+ * @param {object} userBody - Data pengguna (username, email, password, name, role)
  * @returns {Promise<User>}
  */
 const register = async (userBody) => {
-  // Cek jika username sudah ada (method ini ada di user.model.js)
-  if (await User.isUsernameTaken(userBody.username)) {
-    throw new ApiError(400, "Username sudah digunakan");
+  const { username, email, password, name, role } = userBody;
+
+  if (!username || !email || !password || !name) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Semua field wajib diisi (username, email, password, name)"
+    );
   }
 
-  // User.create() akan otomatis menjalankan hook pre-save di user.model.js
-  // yang akan menghash password secara otomatis.
-  const user = await User.create(userBody);
+  if (await User.isUsernameTaken(username)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Username sudah digunakan");
+  }
+
+  if (await User.isEmailTaken(email)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Email sudah digunakan");
+  }
+
+  const user = await User.create({
+    username,
+    email,
+    password,
+    fullName: name,
+    role,
+  });
+
   return user;
 };
 
 /**
  * Login pengguna
- * @param {string} username
+ * @param {string} identifier - Bisa username atau email
  * @param {string} password
  * @returns {Promise<{user: object, token: string}>}
  */
-const login = async (username, password) => {
-  // Kita perlu .select('+password') karena di model kita set 'private: true'
-  const user = await User.findOne({ username }).select("+password");
-
-  // Cek jika user ada DAN password-nya cocok (menggunakan method comparePassword)
-  if (!user || !(await user.comparePassword(password))) {
-    throw new ApiError(401, "Username atau password salah");
+const login = async (identifier, password) => {
+  let user;
+  if (identifier.includes("@")) {
+    user = await User.findOne({ email: identifier }).select("+password");
+  } else {
+    user = await User.findOne({ username: identifier }).select("+password");
   }
 
-  // Jika sukses, buatkan token
+  if (!user || !(await user.comparePassword(password))) {
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Username/Email atau password salah"
+    );
+  }
+
   const token = tokenService.generateToken(user._id);
 
-  // user.toJSON() akan otomatis menghapus password berkat setting di model
   const userObject = user.toJSON();
 
   return { user: userObject, token };

@@ -1,4 +1,3 @@
-// src/utils/dto.js
 function toIso(d) {
   return d ? new Date(d).toISOString() : null;
 }

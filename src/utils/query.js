@@ -1,5 +1,3 @@
-// src/utils/query.js
-
 function parsePagination(query) {
   const page = Math.max(parseInt(query.page || "1", 10), 1);
   const limitRaw = Math.max(parseInt(query.limit || "10", 10), 1);
@@ -9,7 +7,6 @@ function parsePagination(query) {
 }
 
 function parseSort(query) {
-  // allowlist sederhana
   const allowed = new Set([
     "createdAt",
     "updatedAt",

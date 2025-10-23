@@ -1,8 +1,6 @@
-// src/models/serviceTicket.model.js
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-// --- Constants for Enums ---
 const TICKET_STATUSES = [
   "Baru",
   "Dialokasikan",
@@ -13,8 +11,8 @@ const TICKET_STATUSES = [
   "Ditutup",
 ];
 
-// --- Sub-Schemas ---
-// ... (Skema DiagnosticSchema, ComponentUsedSchema, ActionSchema tetap sama) ...
+const TICKET_PRIORITIES = ["Low", "Medium", "High", "Urgent"];
+
 const DiagnosticSchema = new Schema(
   {
     symptom: {
@@ -39,7 +37,7 @@ const ComponentUsedSchema = new Schema(
   {
     component: {
       type: Schema.Types.ObjectId,
-      ref: "Component",
+      ref: "Part",
       required: true,
     },
     quantity: {
@@ -68,8 +66,6 @@ const ActionSchema = new Schema(
   { _id: false }
 );
 
-// --- Main Schema ---
-
 const ServiceTicketSchema = new Schema(
   {
     ticketNumber: { type: String, unique: true, index: true },
@@ -78,8 +74,21 @@ const ServiceTicketSchema = new Schema(
     initialComplaint: { type: String, required: true, trim: true },
     status: {
       type: String,
-      enum: TICKET_STATUSES,
+      enum: {
+        values: TICKET_STATUSES,
+        message: "Status tiket tidak valid ({VALUE})",
+      },
       default: "Baru",
+      index: true,
+    },
+    priority: {
+      type: String,
+      enum: {
+        values: TICKET_PRIORITIES,
+        message: "Prioritas tiket tidak valid ({VALUE})",
+      },
+      default: "Medium",
+      required: true,
       index: true,
     },
     assignedTo: {
@@ -93,10 +102,35 @@ const ServiceTicketSchema = new Schema(
     actions: { type: [ActionSchema], default: [] },
     finalResult: { type: String, trim: true, default: "" },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret) {
+        ret.id = ret._id;
+        if (ret.assignedTo) ret.assignedToId = ret.assignedTo.toString();
+        if (ret.createdBy) ret.createdById = ret.createdBy.toString();
+        delete ret._id;
+        delete ret.assignedTo;
+        delete ret.createdBy;
+        delete ret.__v;
+        return ret;
+      },
+    },
+    toObject: {
+      transform(doc, ret) {
+        ret.id = ret._id;
+        if (ret.assignedTo) ret.assignedToId = ret.assignedTo.toString();
+        if (ret.createdBy) ret.createdById = ret.createdBy.toString();
+        delete ret._id;
+        delete ret.assignedTo;
+        delete ret.createdBy;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  }
 );
 
-// ... (Pre-save hook tetap sama) ...
 ServiceTicketSchema.pre("save", function (next) {
   if (!this.isNew || this.ticketNumber) {
     return next();
@@ -114,4 +148,4 @@ const ServiceTicket =
   mongoose.models.ServiceTicket ||
   mongoose.model("ServiceTicket", ServiceTicketSchema);
 
-module.exports = { ServiceTicket, TICKET_STATUSES };
+module.exports = { ServiceTicket, TICKET_STATUSES, TICKET_PRIORITIES };
