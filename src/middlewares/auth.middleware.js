@@ -3,50 +3,77 @@ const { User } = require("../models");
 const { ApiError, catchAsync } = require("../utils");
 
 /**
- * Middleware untuk memverifikasi token JWT (Autentikasi)
+ * Middleware untuk memverifikasi token JWT (Autentikasi) - Protect Route
  */
 const protect = catchAsync(async (req, res, next) => {
   let token;
+  const authHeader = req.headers.authorization;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
   }
 
   if (!token) {
-    throw new ApiError(401, "Akses ditolak. Silakan login.");
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Akses ditolak. Token tidak ditemukan."
+    );
   }
 
   try {
     const payload = await verifyToken(token);
-    const user = await User.findById(payload.sub);
+
+    const user = await User.findById(payload.sub).select("-password");
 
     if (!user) {
-      throw new ApiError(401, "Pengguna tidak ditemukan.");
+      throw new ApiError(
+        httpStatus.UNAUTHORIZED,
+        "Pengguna pemilik token ini tidak lagi ditemukan."
+      );
+    }
+    if (!user.active) {
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        "Akun pengguna ini tidak aktif."
+      );
     }
 
     req.user = user;
+
     next();
   } catch (error) {
-    throw new ApiError(
-      401,
-      error.message || "Token tidak valid atau kedaluwarsa."
-    );
+    const statusCode =
+      error instanceof ApiError ? error.statusCode : httpStatus.UNAUTHORIZED;
+    const message =
+      error.message || "Token tidak valid atau terjadi kesalahan autentikasi.";
+    throw new ApiError(statusCode, message);
   }
 });
 
 /**
  * Middleware untuk memverifikasi peran pengguna (Otorisasi)
- * @param {string[]} roles - Array berisi peran yang diizinkan (e.g., ['Admin', 'SysAdmin'])
+ * HARUS dijalankan SETELAH middleware 'protect'.
+ * @param {string[]} requiredRoles - Array berisi nama peran (case-sensitive) yang diizinkan.
  */
-const authorize = (roles) => {
+const authorize = (requiredRoles = []) => {
+  const rolesToCheck = Array.isArray(requiredRoles)
+    ? requiredRoles
+    : [requiredRoles];
+
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !req.user.role) {
       throw new ApiError(
-        403,
-        "Anda tidak memiliki hak akses untuk melakukan aksi ini."
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Data pengguna tidak ditemukan setelah autentikasi."
+      );
+    }
+
+    if (!rolesToCheck.includes(req.user.role)) {
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        `Akses ditolak. Hanya role berikut yang diizinkan: ${rolesToCheck.join(
+          ", "
+        )}.`
       );
     }
     next();

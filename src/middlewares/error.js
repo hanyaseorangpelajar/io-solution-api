@@ -1,5 +1,5 @@
 const httpStatus = require("http-status");
-const { ApiError } = require("../utils/ApiError");
+const { ApiError } = require("../utils");
 
 /**
  * Middleware untuk menangani rute yang tidak ditemukan (404).
@@ -13,32 +13,43 @@ const notFound = (req, res, next) => {
  * Middleware penanganan error utama.
  */
 const errorHandler = (err, req, res, next) => {
-  let message = err.message || "Terjadi kesalahan";
-  let statusCode = err.statusCode || err.status || 500;
+  let { statusCode, message } = err;
 
-  if (!Number.isInteger(statusCode) || statusCode < 100 || statusCode > 599) {
+  if (!(err instanceof ApiError) || !err.isOperational) {
+    const originalMessage = message;
     statusCode = httpStatus.INTERNAL_SERVER_ERROR;
-  }
-
-  if (!(err instanceof ApiError)) {
-    if (process.env.NODE_ENV === "production") {
-      message = "Terjadi kesalahan pada server";
+    message = "Terjadi kesalahan internal pada server.";
+    if (process.env.NODE_ENV === "development" && originalMessage) {
+      message = originalMessage;
     }
+    console.error(`[NON-API ERROR] ${req.method} ${req.originalUrl}:`, err);
   }
 
-  console.error(`[${req.method}] ${req.originalUrl} → ${statusCode}`, err);
+  const finalStatusCode =
+    Number.isInteger(statusCode) && statusCode >= 100 && statusCode <= 599
+      ? statusCode
+      : httpStatus.INTERNAL_SERVER_ERROR;
+
+  if (process.env.NODE_ENV === "development") {
+    console.error(
+      `[ERROR] ${finalStatusCode} - ${message} (${req.method} ${req.originalUrl}) \n Stack: ${err.stack}`
+    );
+  } else {
+    console.error(
+      `[ERROR] ${finalStatusCode} - ${message} (${req.method} ${req.originalUrl})`
+    );
+  }
 
   const response = {
     status: "error",
     message,
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   };
 
-  if (process.env.NODE_ENV === "development" && err.stack) {
-    response.stack = err.stack;
+  if (res.headersSent) {
+    return next(err);
   }
-
-  if (res.headersSent) return next(err);
-  res.status(statusCode).json(response);
+  res.status(finalStatusCode).json(response);
 };
 
 module.exports = {

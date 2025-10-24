@@ -1,6 +1,6 @@
-const { Part } = require("../models");
-const { ApiError } = require("../utils");
 const httpStatus = require("http-status");
+const { Part, PART_CATEGORIES } = require("../models");
+const { ApiError } = require("../utils");
 
 /**
  * Membuat part baru.
@@ -8,16 +8,22 @@ const httpStatus = require("http-status");
  * @returns {Promise<Part>}
  */
 const createPart = async (partBody) => {
+  if (partBody.category && !PART_CATEGORIES.includes(partBody.category)) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Kategori '${partBody.category}' tidak valid.`
+    );
+  }
   return Part.create(partBody);
 };
 
 /**
- * Mendapatkan semua parts dengan filter.
- * @param {Object} filter - Filter query Mongoose.
+ * Mendapatkan semua parts dengan filter dan sorting.
+ * @param {Object} filter - Filter query Mongoose (misal { category: 'ram' }).
  * @returns {Promise<Part[]>}
  */
 const getParts = async (filter) => {
-  return Part.find(filter);
+  return Part.find(filter).sort({ name: 1 });
 };
 
 /**
@@ -40,6 +46,13 @@ const updatePartById = async (partId, updateBody) => {
   if (!part) {
     throw new ApiError(httpStatus.NOT_FOUND, "Part tidak ditemukan");
   }
+  if (updateBody.category && !PART_CATEGORIES.includes(updateBody.category)) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Kategori '${updateBody.category}' tidak valid.`
+    );
+  }
+
   Object.assign(part, updateBody);
   await part.save();
   return part;

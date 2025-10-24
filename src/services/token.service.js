@@ -1,4 +1,6 @@
 const jwt = require("jsonwebtoken");
+const httpStatus = require("http-status");
+const { ApiError } = require("../utils");
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia-super-rahasia-default";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -9,26 +11,48 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
  * @returns {string} Token JWT
  */
 const generateToken = (userId) => {
+  if (!userId) {
+    throw new Error("UserId diperlukan untuk generate token.");
+  }
   const payload = {
     sub: userId,
     iat: Math.floor(Date.now() / 1000),
   };
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+  try {
+    return jwt.sign(payload, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+  } catch (error) {
+    console.error("Error signing JWT:", error);
+    throw new Error("Gagal membuat token autentikasi.");
+  }
 };
 
 /**
- * Verify JWT token
+ * Verify JWT token and return payload
  * @param {string} token
- * @returns {Promise<object>} Payload token (berisi 'sub' dan 'iat')
+ * @returns {Promise<object>} Payload token (berisi 'sub' dan 'iat', 'exp')
+ * @throws {ApiError} Jika token tidak valid atau kedaluwarsa
  */
 const verifyToken = async (token) => {
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     return payload;
   } catch (error) {
-    throw new Error("Token tidak valid atau kedaluwarsa");
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new ApiError(
+        httpStatus.UNAUTHORIZED,
+        "Token telah kedaluwarsa, silakan login kembali."
+      );
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, "Token tidak valid.");
+    }
+    console.error("Unexpected error verifying token:", error);
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Token tidak dapat diverifikasi."
+    );
   }
 };
 

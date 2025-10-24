@@ -1,9 +1,36 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const { Schema } = mongoose;
 
 const ROLES = ["Teknisi", "Admin", "SysAdmin"];
 
-const UserSchema = new mongoose.Schema(
+const SecuritySettingsSchema = new Schema(
+  {
+    twoFactorEnabled: { type: Boolean, default: false },
+    recoveryEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: null,
+    },
+  },
+  { _id: false }
+);
+const NotificationSettingsSchema = new Schema(
+  {
+    updates: { type: Boolean, default: true },
+    announcements: { type: Boolean, default: true },
+    alerts: { type: Boolean, default: true },
+    frequency: {
+      type: String,
+      enum: ["immediate", "daily", "weekly"],
+      default: "immediate",
+    },
+  },
+  { _id: false }
+);
+
+const UserSchema = new Schema(
   {
     username: {
       type: String,
@@ -41,10 +68,29 @@ const UserSchema = new mongoose.Schema(
       default: "Teknisi",
       index: true,
     },
-    avatarUrl: {
+    avatarUrl: { type: String, trim: true, default: null },
+    phone: {
       type: String,
       trim: true,
       default: null,
+    },
+    department: { type: String, trim: true, default: null },
+
+    active: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+
+    securitySettings: {
+      type: SecuritySettingsSchema,
+      default: () => ({}),
+      select: false,
+    },
+    notificationSettings: {
+      type: NotificationSettingsSchema,
+      default: () => ({}),
+      select: false,
     },
   },
   {
@@ -53,7 +99,17 @@ const UserSchema = new mongoose.Schema(
       transform(doc, ret) {
         ret.id = ret._id;
         ret.name = ret.fullName;
-
+        delete ret._id;
+        delete ret.fullName;
+        delete ret.password;
+        delete ret.__v;
+        return ret;
+      },
+    },
+    toObject: {
+      transform(doc, ret) {
+        ret.id = ret._id;
+        ret.name = ret.fullName;
         delete ret._id;
         delete ret.fullName;
         delete ret.password;
@@ -64,33 +120,19 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-/**
- * Cek apakah email sudah digunakan
- * @param {string} email - Email pengguna
- * @param {ObjectId} [excludeUserId] - ID pengguna yang akan dikecualikan
- * @returns {Promise<boolean>}
- */
-UserSchema.statics.isEmailTaken = async function (email, excludeUserId) {
-  const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
-  return !!user;
-};
-
-UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
-  const user = await this.findOne({ username, _id: { $ne: excludeUserId } });
-  return !!user;
-};
-
-UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-
-UserSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
-};
+UserSchema.statics.isEmailTaken = async function (email, excludeUserId) {};
+UserSchema.statics.isUsernameTaken = async function (
+  username,
+  excludeUserId
+) {};
+UserSchema.pre("save", async function (next) {});
+UserSchema.methods.comparePassword = async function (candidatePassword) {};
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
-module.exports = { User, ROLES, isEmailTaken: UserSchema.statics.isEmailTaken };
+module.exports = {
+  User,
+  ROLES,
+  isEmailTaken: User.isEmailTaken,
+  isUsernameTaken: User.isUsernameTaken,
+};

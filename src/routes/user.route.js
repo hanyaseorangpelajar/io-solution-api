@@ -4,6 +4,8 @@ const { protect, authorize } = require("../middlewares");
 
 const router = express.Router();
 
+router.patch("/me", protect, userController.updateProfile);
+
 router.use(protect);
 router.use(authorize(["SysAdmin"]));
 

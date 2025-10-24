@@ -18,9 +18,9 @@ let server;
 
     server.listen(PORT, HOST, () => {
       console.log(
-        `🚀 Server running on http://${
-          HOST === "0.0.0.0" ? "localhost" : HOST
-        }:${PORT}`
+        `🚀 Server running in ${
+          process.env.NODE_ENV || "development"
+        } mode on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`
       );
     });
 

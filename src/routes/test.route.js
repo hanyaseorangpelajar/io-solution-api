@@ -2,7 +2,15 @@ const express = require("express");
 const router = express.Router();
 require("express-async-errors");
 
-const { User, ServiceTicket, Component, KnowledgeEntry } = require("../models");
+const {
+  User,
+  Ticket,
+  Part,
+  KnowledgeEntry,
+  AuditRecord,
+  RmaRecord,
+  StockMovement,
+} = require("../models");
 
 /**
  * @route   POST /api/test/reset-db
@@ -20,20 +28,32 @@ router.post("/reset-db", async (req, res) => {
     const results = {};
 
     if (User) {
-      const userRes = await User.deleteMany({});
-      results.users = `${userRes.deletedCount} dihapus`;
+      const r = await User.deleteMany({});
+      results.users = `${r.deletedCount} dihapus`;
     }
-    if (ServiceTicket) {
-      const ticketRes = await ServiceTicket.deleteMany({});
-      results.serviceTickets = `${ticketRes.deletedCount} dihapus`;
+    if (Ticket) {
+      const r = await Ticket.deleteMany({});
+      results.tickets = `${r.deletedCount} dihapus`;
     }
-    if (Component) {
-      const compRes = await Component.deleteMany({});
-      results.components = `${compRes.deletedCount} dihapus`;
+    if (Part) {
+      const r = await Part.deleteMany({});
+      results.parts = `${r.deletedCount} dihapus`;
     }
     if (KnowledgeEntry) {
-      const keRes = await KnowledgeEntry.deleteMany({});
-      results.knowledgeEntries = `${keRes.deletedCount} dihapus`;
+      const r = await KnowledgeEntry.deleteMany({});
+      results.knowledgeEntries = `${r.deletedCount} dihapus`;
+    }
+    if (AuditRecord) {
+      const r = await AuditRecord.deleteMany({});
+      results.auditRecords = `${r.deletedCount} dihapus`;
+    }
+    if (RmaRecord) {
+      const r = await RmaRecord.deleteMany({});
+      results.rmaRecords = `${r.deletedCount} dihapus`;
+    }
+    if (StockMovement) {
+      const r = await StockMovement.deleteMany({});
+      results.stockMovements = `${r.deletedCount} dihapus`;
     }
 
     res.status(200).json({ message: "Database collections cleared!", results });

@@ -7,7 +7,7 @@ const AuditRecordSchema = new Schema(
   {
     ticket: {
       type: Schema.Types.ObjectId,
-      ref: "ServiceTicket",
+      ref: "Ticket",
       required: [true, "Referensi tiket wajib diisi"],
       index: true,
     },
@@ -70,7 +70,6 @@ const AuditRecordSchema = new Schema(
     toJSON: {
       transform(doc, ret) {
         ret.id = ret._id;
-
         if (ret.ticket) {
           ret.ticketId =
             typeof ret.ticket === "object"

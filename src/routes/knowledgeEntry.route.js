@@ -25,10 +25,27 @@ router.post(
   authorize(["Admin", "SysAdmin"]),
   knowledgeEntryController.createFromTicket
 );
+
+router.put(
+  "/:id",
+  authorize(["Admin", "SysAdmin"]),
+  knowledgeEntryController.updateKnowledgeEntry
+);
 router.put(
   "/:id/publish",
   authorize(["Admin", "SysAdmin"]),
   knowledgeEntryController.publishEntry
+);
+router.put(
+  "/:id/unpublish",
+  authorize(["Admin", "SysAdmin"]),
+  knowledgeEntryController.unpublishEntry
+);
+
+router.delete(
+  "/:id",
+  authorize(["Admin", "SysAdmin"]),
+  knowledgeEntryController.deleteKnowledgeEntry
 );
 
 module.exports = router;

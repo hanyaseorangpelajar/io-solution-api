@@ -1,4 +1,10 @@
-function parsePagination(query) {
+/**
+ * Mem-parsing parameter pagination (page, limit) dari query string request.
+ * Memberikan nilai default dan batas maksimum untuk limit.
+ * @param {object} query - Objek req.query.
+ * @returns {{page: number, limit: number, skip: number}}
+ */
+function parsePagination(query = {}) {
   const page = Math.max(parseInt(query.page || "1", 10), 1);
   const limitRaw = Math.max(parseInt(query.limit || "10", 10), 1);
   const limit = Math.min(limitRaw, 100);
@@ -6,46 +12,28 @@ function parsePagination(query) {
   return { page, limit, skip };
 }
 
-function parseSort(query) {
-  const allowed = new Set([
-    "createdAt",
-    "updatedAt",
-    "priority",
-    "status",
-    "subject",
-  ]);
-  const sortBy = (query.sortBy || "createdAt").toString();
-  const field = allowed.has(sortBy) ? sortBy : "createdAt";
+/**
+ * Mem-parsing parameter sorting (sortBy, order) dari query string request.
+ * Menggunakan allowlist untuk field yang boleh disortir.
+ * @param {object} query - Objek req.query.
+ * @param {string[]} [allowedSortFields=['createdAt', 'updatedAt']] - Array field yang diizinkan untuk sorting.
+ * @param {object} [defaultSort={ createdAt: -1 }] - Objek sorting default jika tidak ada di query.
+ * @returns {object} Objek sorting Mongoose (e.g., { createdAt: -1 }).
+ */
+function parseSort(
+  query = {},
+  allowedSortFields = ["createdAt", "updatedAt"],
+  defaultSort = { createdAt: -1 }
+) {
+  const sortBy = query.sortBy?.toString();
   const order = (query.order || "desc").toString().toLowerCase();
   const dir = order === "asc" ? 1 : -1;
-  return { [field]: dir };
-}
 
-function buildTicketFilters(query) {
-  const filters = {};
-
-  if (query.status) filters.status = query.status;
-  if (query.priority) filters.priority = query.priority;
-  if (query.assignee) filters.assignee = query.assignee;
-  if (query.tag) filters.tags = { $in: [query.tag] };
-
-  if (query.q) {
-    const regex = new RegExp(query.q, "i");
-    filters.$or = [
-      { subject: regex },
-      { description: regex },
-      { code: regex },
-      { requester: regex },
-    ];
+  if (sortBy && allowedSortFields.includes(sortBy)) {
+    return { [sortBy]: dir };
   }
 
-  if (query.from || query.to) {
-    filters.createdAt = {};
-    if (query.from) filters.createdAt.$gte = new Date(query.from);
-    if (query.to) filters.createdAt.$lte = new Date(query.to);
-  }
-
-  return filters;
+  return defaultSort;
 }
 
-module.exports = { parsePagination, parseSort, buildTicketFilters };
+module.exports = { parsePagination, parseSort };

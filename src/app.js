@@ -6,9 +6,8 @@ const morgan = require("morgan");
 require("express-async-errors");
 
 const routesV1 = require("./routes");
-const { notFound, errorHandler } = require("./middlewares/error");
-
-const testRoutes = require("./routes/test.route");
+const { notFound, errorHandler } = require("./middlewares");
+const testRoutes = require("./routes/index");
 
 const app = express();
 

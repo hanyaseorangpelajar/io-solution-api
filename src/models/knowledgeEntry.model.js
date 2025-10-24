@@ -24,10 +24,15 @@ const KnowledgeEntrySchema = new Schema(
       required: [true, "Solusi wajib diisi"],
       trim: true,
     },
-    relatedComponents: [{ type: Schema.Types.ObjectId, ref: "Component" }],
+    relatedComponents: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Part",
+      },
+    ],
     sourceTicket: {
       type: Schema.Types.ObjectId,
-      ref: "ServiceTicket",
+      ref: "Ticket",
       required: [true, "Tiket sumber wajib ada untuk traceability"],
       index: true,
     },
@@ -36,8 +41,74 @@ const KnowledgeEntrySchema = new Schema(
       default: false,
       index: true,
     },
+    tags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(doc, ret) {
+        ret.id = ret._id;
+        if (Array.isArray(ret.relatedComponents)) {
+          ret.relatedComponentIds = ret.relatedComponents
+            .map((comp) =>
+              typeof comp === "object" ? comp._id?.toString() : comp.toString()
+            )
+            .filter((id) => id);
+        } else {
+          ret.relatedComponentIds = [];
+        }
+        if (ret.sourceTicket) {
+          ret.sourceTicketId =
+            typeof ret.sourceTicket === "object"
+              ? ret.sourceTicket._id?.toString()
+              : ret.sourceTicket.toString();
+        } else {
+          ret.sourceTicketId = null;
+        }
+        ret.createdAt = ret.createdAt?.toISOString();
+        ret.updatedAt = ret.updatedAt?.toISOString();
+
+        delete ret._id;
+        delete ret.relatedComponents;
+        delete ret.sourceTicket;
+        delete ret.__v;
+        return ret;
+      },
+    },
+    toObject: {
+      transform(doc, ret) {
+        ret.id = ret._id;
+        if (Array.isArray(ret.relatedComponents)) {
+          ret.relatedComponentIds = ret.relatedComponents
+            .map((comp) =>
+              typeof comp === "object" ? comp._id?.toString() : comp.toString()
+            )
+            .filter((id) => id);
+        } else {
+          ret.relatedComponentIds = [];
+        }
+        if (ret.sourceTicket) {
+          ret.sourceTicketId =
+            typeof ret.sourceTicket === "object"
+              ? ret.sourceTicket._id?.toString()
+              : ret.sourceTicket.toString();
+        } else {
+          ret.sourceTicketId = null;
+        }
+        ret.createdAt = ret.createdAt?.toISOString();
+        ret.updatedAt = ret.updatedAt?.toISOString();
+        delete ret._id;
+        delete ret.relatedComponents;
+        delete ret.sourceTicket;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  }
 );
 
 const KnowledgeEntry =

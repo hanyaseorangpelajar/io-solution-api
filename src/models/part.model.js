@@ -3,6 +3,19 @@ const { Schema } = mongoose;
 
 const PART_STATUSES = ["active", "inactive", "discontinued"];
 
+const PART_CATEGORIES = [
+  "cpu",
+  "motherboard",
+  "ram",
+  "storage",
+  "gpu",
+  "psu",
+  "case",
+  "cooler",
+  "nic",
+  "others",
+];
+
 const PartSchema = new Schema(
   {
     name: {
@@ -23,6 +36,10 @@ const PartSchema = new Schema(
       trim: true,
       index: true,
       default: null,
+      enum: {
+        values: PART_CATEGORIES,
+        message: "Kategori part tidak valid ({VALUE})",
+      },
     },
     vendor: {
       type: String,
@@ -92,4 +109,4 @@ const PartSchema = new Schema(
 
 const Part = mongoose.models.Part || mongoose.model("Part", PartSchema);
 
-module.exports = { Part, PART_STATUSES };
+module.exports = { Part, PART_STATUSES, PART_CATEGORIES };

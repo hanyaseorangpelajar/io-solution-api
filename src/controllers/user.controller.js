@@ -58,10 +58,17 @@ const deleteUserController = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const updateProfileController = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const user = await updateUserProfile(userId, req.body);
+  res.send(user);
+});
+
 module.exports = {
   createUser: createUserController,
   getUsers: getUsersController,
   getUser: getUserController,
   updateUser: updateUserController,
   deleteUser: deleteUserController,
+  updateProfile: updateProfileController,
 };
