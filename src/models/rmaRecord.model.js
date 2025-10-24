@@ -178,7 +178,52 @@ const RmaRecordSchema = new Schema(
   }
 );
 
-RmaRecordSchema.pre("save", async function (next) {});
+RmaRecordSchema.pre("save", async function (next) {
+  if (!this.isNew || this.code) {
+    return next();
+  }
+
+  try {
+    const year = new Date().getFullYear();
+    const RmaModel = this.constructor;
+    if (!RmaModel || typeof RmaModel.findOne !== "function") {
+      throw new Error("Tidak dapat menemukan konstruktor model RMA.");
+    }
+
+    const lastRma = await RmaModel.findOne({
+      code: new RegExp(`^RMA-${year}-`),
+    })
+      .sort({ code: -1 })
+      .select("code")
+      .lean();
+
+    let sequence = 1;
+    if (lastRma && lastRma.code) {
+      const codeParts = lastRma.code.split("-");
+      if (codeParts.length === 3) {
+        const lastSeq = parseInt(codeParts[2], 10);
+        if (!isNaN(lastSeq)) {
+          sequence = lastSeq + 1;
+        } else {
+          console.warn(
+            `[RMA Hook] Gagal parse sequence dari code: ${lastRma.code}. Menggunakan sequence 1.`
+          );
+        }
+      } else {
+        console.warn(
+          `[RMA Hook] Format kode RMA terakhir tidak dikenali: ${lastRma.code}. Menggunakan sequence 1.`
+        );
+      }
+    }
+
+    this.code = `RMA-${year}-${String(sequence).padStart(5, "0")}`;
+    console.log(`[RMA Hook] Generated code: ${this.code}`);
+    next();
+  } catch (error) {
+    console.error("❌ Error dalam hook pre-save RMA code generator:", error);
+    next(error);
+  }
+});
 
 const RmaRecord =
   mongoose.models.RmaRecord || mongoose.model("RmaRecord", RmaRecordSchema);
