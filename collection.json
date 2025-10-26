@@ -1,829 +1,1083 @@
 {
-	"info": {
-		"_postman_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-		"name": "IO Solutions API",
-		"description": "Koleksi Postman untuk menguji API Service & Inventory (IO Solutions).",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Auth",
-			"description": "Endpoint untuk registrasi dan login",
-			"item": [
-				{
-					"name": "Register User",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"sysadmin\",\n    \"password\": \"password123\",\n    \"fullName\": \"System Admin Utama\",\n    \"role\": \"SysAdmin\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/auth/register",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"auth",
-								"register"
-							]
-						},
-						"description": "Membuat pengguna baru (SysAdmin, Admin, atau Teknisi)"
-					},
-					"response": []
-				},
-				{
-					"name": "Login User",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"sysadmin\",\n    \"password\": \"password123\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/auth/login",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "Login untuk mendapatkan JWT Token."
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Components",
-			"description": "Manajemen Katalog Komponen (Protected: Admin/SysAdmin)",
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{authToken}}",
-						"type": "string"
-					}
-				]
-			},
-			"item": [
-				{
-					"name": "Create Component",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Kingston FURY Beast 16GB DDR4 3200MHz\",\n    \"type\": \"RAM\",\n    \"stock\": 50,\n    \"price\": 850000\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/components",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"components"
-							]
-						},
-						"description": "Membuat komponen baru di katalog. (Hanya Admin/SysAdmin)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Components",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/components",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"components"
-							]
-						},
-						"description": "Mendapatkan daftar semua komponen. (Semua user ter-login)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Component by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/components/:id",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"components",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_KOMPONPONEN>"
-								}
-							]
-						},
-						"description": "Mendapatkan detail satu komponen berdasarkan ID-nya. (Semua user ter-login)"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Component",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"stock\": 45,\n    \"price\": 875000\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/components/:id",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"components",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_KOMPONPONEN>"
-								}
-							]
-						},
-						"description": "Memperbarui stok atau harga komponen. (Hanya Admin/SysAdmin)"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Component",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/components/:id",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"components",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_KOMPONPONEN>"
-								}
-							]
-						},
-						"description": "Menghapus komponen dari katalog. (Hanya Admin/SysAdmin)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Users",
-			"description": "Manajemen Pengguna (Protected: SysAdmin Only)",
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{authToken}}",
-						"type": "string"
-					}
-				]
-			},
-			"item": [
-				{
-					"name": "Create User",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"budi_teknisi\",\n    \"password\": \"password123\",\n    \"fullName\": \"Budi Santoso\",\n    \"role\": \"Teknisi\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/users",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users"
-							]
-						},
-						"description": "Membuat pengguna baru (Teknisi atau Admin). (Hanya SysAdmin)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Users",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users"
-							]
-						},
-						"description": "Mendapatkan daftar semua pengguna. (Hanya SysAdmin)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get User by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users/:id",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_USER>"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update User",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"fullName\": \"Budi Santoso Updated\",\n    \"role\": \"Admin\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/users/:id",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_USER>"
-								}
-							]
-						},
-						"description": "Memperbarui nama lengkap atau peran pengguna. (Hanya SysAdmin)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Service Tickets",
-			"description": "Alur Kerja Utama: Manajemen Tiket Layanan (Protected: All Roles)",
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{authToken}}",
-						"type": "string"
-					}
-				]
-			},
-			"item": [
-				{
-					"name": "Create Ticket",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"customerName\": \"Andi\",\n    \"deviceInfo\": \"Laptop Dell XPS 15\",\n    \"initialComplaint\": \"Layar sering berkedip dan mati sendiri.\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/tickets",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"tickets"
-							]
-						},
-						"description": "Membuat tiket layanan baru. (Field 'createdBy' akan diambil otomatis dari token)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Tickets",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/tickets?status=Baru",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"tickets"
-							],
-							"query": [
-								{
-									"key": "status",
-									"value": "Baru"
-								}
-							]
-						},
-						"description": "Mendapatkan semua tiket, bisa difilter berdasarkan status."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Ticket by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/tickets/:id",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"tickets",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_TIKET>"
-								}
-							]
-						},
-						"description": "Mendapatkan detail lengkap satu tiket."
-					},
-					"response": []
-				},
-				{
-					"name": "Assign Ticket",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"userId\": \"<GANTI_DENGAN_ID_USER_TEKNISI>\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/tickets/:id/assign",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"tickets",
-								":id",
-								"assign"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_TIKET>"
-								}
-							]
-						},
-						"description": "Mengalokasikan tiket ke seorang teknisi. (Hanya Admin/SysAdmin)"
-					},
-					"response": []
-				},
-				{
-					"name": "Add Diagnosis",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"symptom\": \"Layar berkedip saat digerakkan\",\n    \"diagnosis\": \"Indikasi kerusakan pada kabel fleksibel LCD.\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/tickets/:id/diagnose",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"tickets",
-								":id",
-								"diagnose"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_TIKET>"
-								}
-							]
-						},
-						"description": "Teknisi menambahkan hasil diagnosis ke riwayat tiket."
-					},
-					"response": []
-				},
-				{
-					"name": "Add Action",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"actionTaken\": \"Mengganti kabel fleksibel LCD.\",\n    \"componentsUsed\": [\n        {\n            \"component\": \"<GANTI_DENGAN_ID_KOMPONEN>\",\n            \"quantity\": 1\n        }\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/tickets/:id/action",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"tickets",
-								":id",
-								"action"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_TIKET>"
-								}
-							]
-						},
-						"description": "Teknisi menambahkan tindakan perbaikan dan komponen yang digunakan (akan mengurangi stok)."
-					},
-					"response": []
-				},
-				{
-					"name": "Update Ticket Status",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"status\": \"Selesai\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/tickets/:id/status",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"tickets",
-								":id",
-								"status"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_TIKET>"
-								}
-							]
-						},
-						"description": "Mengubah status tiket (misal: 'Selesai', 'Dibatalkan')."
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Knowledge Base",
-			"description": "Manajemen Basis Pengetahuan (KMS) (Protected)",
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{authToken}}",
-						"type": "string"
-					}
-				]
-			},
-			"item": [
-				{
-					"name": "Create Entry from Ticket",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/knowledge/from-ticket/:ticketId",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"knowledge",
-								"from-ticket",
-								":ticketId"
-							],
-							"variable": [
-								{
-									"key": "ticketId",
-									"value": "<GANTI_DENGAN_ID_TIKET_SELESAI>"
-								}
-							]
-						},
-						"description": "Membuat draft entri KB secara otomatis dari tiket yang sudah 'Selesai'. (Hanya Admin/SysAdmin)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Published Entries",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/knowledge",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"knowledge"
-							]
-						},
-						"description": "Melihat semua entri KB yang sudah dipublikasikan. (Semua user ter-login)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Draft Entries",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/knowledge/drafts",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"knowledge",
-								"drafts"
-							]
-						},
-						"description": "Melihat semua entri KB yang masih berupa draft. (Hanya Admin/SysAdmin)"
-					},
-					"response": []
-				},
-				{
-					"name": "Publish Entry",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/knowledge/:id/publish",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"knowledge",
-								":id",
-								"publish"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "<GANTI_DENGAN_ID_KB_DRAFT>"
-								}
-							]
-						},
-						"description": "Mempublikasikan sebuah entri KB yang masih draft. (Hanya Admin/SysAdmin)"
-					},
-					"response": []
-				},
-				{
-					"name": "Create Entry Manually",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"title\": \"Cara Mengatasi Overheating pada CPU Ryzen 5\",\n    \"symptom\": \"Komputer mati mendadak saat bermain game berat.\",\n    \"diagnosis\": \"Suhu CPU mencapai lebih dari 95°C.\",\n    \"solution\": \"Ganti thermal paste dan pastikan aliran udara casing baik.\",\n    \"relatedComponents\": [\n        \"<GANTI_DENGAN_ID_KOMPONEN_CPU>\"\n    ],\n    \"sourceTicket\": \"<GANTI_DENGAN_ID_TIKET_TERKAIT>\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/knowledge",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"knowledge"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Reports",
-			"description": "Laporan dan Analitik Data (Protected: Admin/SysAdmin)",
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{authToken}}",
-						"type": "string"
-					}
-				]
-			},
-			"item": [
-				{
-					"name": "Ticket Summary",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/reports/ticket-summary",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"reports",
-								"ticket-summary"
-							]
-						},
-						"description": "Laporan jumlah tiket per status dan per teknisi."
-					},
-					"response": []
-				},
-				{
-					"name": "Component Usage",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/reports/component-usage",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"reports",
-								"component-usage"
-							]
-						},
-						"description": "Laporan komponen yang paling sering digunakan."
-					},
-					"response": []
-				},
-				{
-					"name": "Common Issues",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/reports/common-issues",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"reports",
-								"common-issues"
-							]
-						},
-						"description": "Laporan gejala/masalah yang paling sering muncul."
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Health Check",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/health",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"health"
-					]
-				},
-				"description": "Memeriksa status kesehatan dan informasi dasar dari service API."
-			},
-			"response": []
-		},
-		{
-			"name": "Test (DEV ONLY)",
-			"item": [
-				{
-					"name": "Reset Database",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:4000/api/test/reset-db",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "4000",
-							"path": [
-								"api",
-								"test",
-								"reset-db"
-							]
-						},
-						"description": "Menghapus semua data dari koleksi. Hanya untuk development."
-					},
-					"response": []
-				}
-			]
-		}
-	],
-	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "http://localhost:4000/api/v1",
-			"type": "string"
-		},
-		{
-			"key": "authToken",
-			"value": "",
-			"type": "string"
-		}
-	]
+  "info": {
+    "_postman_id": "c1f7a0b8-0d1a-4f8a-8a5e-3d1b3e1c0a2b",
+    "name": "API Service Proyek",
+    "description": "Koleksi yang dibuat secara otomatis berdasarkan file-file kode sumber Node.js.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"Admin User\",\n  \"role\": \"SysAdmin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registrasi pengguna baru. Endpoint ini publik."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "try {",
+                  "    var res = pm.response.json();",
+                  "    if (res && res.token) {",
+                  "        pm.collectionVariables.set(\"authToken\", res.token);",
+                  "        console.log(\"Auth Token set!\");",
+                  "    }",
+                  "} catch (e) {",
+                  "    console.log(\"Could not parse login response or find token.\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"admin\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login untuk mendapatkan token JWT. Endpoint ini publik."
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "noauth"
+      },
+      "description": "Rute untuk autentikasi pengguna."
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Memeriksa apakah API berjalan."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User (SysAdmin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"tek1\",\n  \"email\": \"tek1@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"Teknisi Satu\",\n  \"role\": \"Teknisi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Membuat pengguna baru. Memerlukan role 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users (SysAdmin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Mendapatkan daftar semua pengguna. Memerlukan role 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User By ID (SysAdmin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/USER_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "USER_ID"
+              ]
+            },
+            "description": "Mendapatkan detail satu pengguna. Memerlukan role 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Update User By ID (SysAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Teknisi Satu (Edited)\",\n  \"role\": \"Admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/USER_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "USER_ID"
+              ]
+            },
+            "description": "Memperbarui pengguna. Hanya 'fullName' dan 'role' yang diizinkan."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User By ID (SysAdmin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/USER_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "USER_ID"
+              ]
+            },
+            "description": "Menonaktifkan pengguna (soft delete). Memerlukan role 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My New Name\",\n  \"phone\": \"08123456789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Memperbarui profil pengguna yang sedang login."
+          },
+          "response": []
+        }
+      ],
+      "description": "Rute untuk manajemen pengguna (Memerlukan auth, sebagian besar 'SysAdmin')."
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "Create Ticket (Admin/SysAdmin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"PC Kantor Rusak\",\n  \"requester\": \"Budi\",\n  \"priority\": \"high\",\n  \"description\": \"PC di meja Budi tidak mau menyala.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets"
+              ]
+            },
+            "description": "Membuat tiket layanan baru. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets?status=open&priority=high",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "open"
+                },
+                {
+                  "key": "priority",
+                  "value": "high"
+                },
+                {
+                  "key": "assignee",
+                  "value": "USER_ID",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar tiket dengan filter."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Ticket By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/TICKET_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets",
+                "TICKET_ID"
+              ]
+            },
+            "description": "Mendapatkan detail lengkap satu tiket."
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Ticket (Admin/SysAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"USER_ID_TEKNISI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/TICKET_ID/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets",
+                "TICKET_ID",
+                "assign"
+              ]
+            },
+            "description": "Menugaskan tiket ke teknisi. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Diagnosis",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symptom\": \"Tidak ada daya, lampu PSU mati\",\n  \"diagnosis\": \"Kemungkinan PSU rusak atau kabel power putus\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/TICKET_ID/diagnose",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets",
+                "TICKET_ID",
+                "diagnose"
+              ]
+            },
+            "description": "Menambahkan catatan diagnosis ke tiket."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Action",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actionTaken\": \"Mengganti PSU dengan yang baru\",\n  \"partsUsed\": [\n    {\n      \"partId\": \"PART_ID_PSU\",\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/TICKET_ID/action",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets",
+                "TICKET_ID",
+                "action"
+              ]
+            },
+            "description": "Menambahkan catatan tindakan dan penggunaan part."
+          },
+          "response": []
+        },
+        {
+          "name": "Resolve Ticket",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rootCause\": \"PSU mati total\",\n  \"solution\": \"PSU diganti dengan yang baru, unit sudah tes nyala normal\",\n  \"tags\": [\"hardware\", \"psu\", \"no-power\"],\n  \"parts\": [\n    {\n      \"partId\": \"PART_ID_PSU\",\n      \"name\": \"PSU 500W SuperFlower\",\n      \"qty\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/TICKET_ID/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets",
+                "TICKET_ID",
+                "resolve"
+              ]
+            },
+            "description": "Menyelesaikan tiket dan menambahkan detail resolusi."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Ticket Status (Admin/SysAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"closed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/TICKET_ID/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets",
+                "TICKET_ID",
+                "status"
+              ]
+            },
+            "description": "Mengubah status tiket (misal: 'closed', 'in_progress'). Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        }
+      ],
+      "description": "Rute untuk manajemen tiket layanan. Memerlukan 'protect' (autentikasi)."
+    },
+    {
+      "name": "Parts",
+      "item": [
+        {
+          "name": "Create Part (Admin/SysAdmin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"DDR4 RAM 8GB 3200MHz\",\n  \"sku\": \"KNG-DDR4-8G-3200\",\n  \"category\": \"ram\",\n  \"vendor\": \"Kingston\",\n  \"unit\": \"pcs\",\n  \"stock\": 20,\n  \"minStock\": 5,\n  \"price\": 500000,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parts"
+              ]
+            },
+            "description": "Membuat part/komponen baru. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Parts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parts?category=ram&status=active&q=DDR4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parts"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "ram"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "q",
+                  "value": "DDR4"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar part dengan filter."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Part By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parts/PART_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parts",
+                "PART_ID"
+              ]
+            },
+            "description": "Mendapatkan detail satu part."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Part (Admin/SysAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"DDR4 RAM 8GB 3200MHz (Updated)\",\n  \"price\": 520000,\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parts/PART_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parts",
+                "PART_ID"
+              ]
+            },
+            "description": "Memperbarui detail part. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Part (Admin/SysAdmin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parts/PART_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parts",
+                "PART_ID"
+              ]
+            },
+            "description": "Menghapus part. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        }
+      ],
+      "description": "Rute untuk manajemen part/inventaris. Memerlukan 'protect' (autentikasi)."
+    },
+    {
+      "name": "Knowledge Base",
+      "item": [
+        {
+          "name": "Get Published Entries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge?tags=hardware&q=PSU",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge"
+              ],
+              "query": [
+                {
+                  "key": "tags",
+                  "value": "hardware"
+                },
+                {
+                  "key": "q",
+                  "value": "PSU"
+                }
+              ]
+            },
+            "description": "Mendapatkan entri KB yang sudah terbit (publik)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Draft Entries (Admin/SysAdmin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/drafts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge",
+                "drafts"
+              ]
+            },
+            "description": "Mendapatkan entri KB yang masih draft. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entry By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/KB_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge",
+                "KB_ID"
+              ]
+            },
+            "description": "Mendapatkan detail satu entri KB."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Entry (Admin/SysAdmin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Solusi PC Mati Total\",\n  \"symptom\": \"PC tidak merespon tombol power\",\n  \"diagnosis\": \"PSU rusak\",\n  \"solution\": \"Ganti PSU dengan yang baru\",\n  \"sourceTicketId\": \"TICKET_ID_YANG_RESOLVED\",\n  \"tags\": [\"hardware\", \"psu\"],\n  \"isPublished\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/knowledge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge"
+              ]
+            },
+            "description": "Membuat entri KB baru secara manual. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Entry From Ticket (Admin/SysAdmin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/from-ticket/TICKET_ID_RESOLVED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge",
+                "from-ticket",
+                "TICKET_ID_RESOLVED"
+              ]
+            },
+            "description": "Membuat draft entri KB dari tiket yang sudah 'resolved'. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Entry (Admin/SysAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"[UPDATED] Solusi PC Mati Total\",\n  \"solution\": \"Ganti PSU dengan yang baru, pastikan kabel terpasang baik.\",\n  \"isPublished\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/KB_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge",
+                "KB_ID"
+              ]
+            },
+            "description": "Memperbarui entri KB. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Entry (Admin/SysAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/KB_ID/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge",
+                "KB_ID",
+                "publish"
+              ]
+            },
+            "description": "Mengubah status entri KB menjadi 'published'. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Unpublish Entry (Admin/SysAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/KB_ID/unpublish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge",
+                "KB_ID",
+                "unpublish"
+              ]
+            },
+            "description": "Mengubah status entri KB menjadi 'draft' (unpublished). Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Entry (Admin/SysAdmin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/knowledge/KB_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "knowledge",
+                "KB_ID"
+              ]
+            },
+            "description": "Menghapus entri KB. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        }
+      ],
+      "description": "Rute untuk manajemen Basis Pengetahuan (Knowledge Base). Memerlukan 'protect' (autentikasi)."
+    },
+    {
+      "name": "RMA",
+      "item": [
+        {
+          "name": "Create RMA Record (Admin/SysAdmin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Klaim Garansi VGA Rusak\",\n  \"customerName\": \"Charlie\",\n  \"productName\": \"VGA SuperX 1000\",\n  \"productSku\": \"VGA-SX-1000\",\n  \"issueDesc\": \"Artefak saat main game\",\n  \"ticketId\": \"TICKET_ID_TERKAIT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rma",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rma"
+              ]
+            },
+            "description": "Membuat catatan RMA baru. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        },
+        {
+          "name": "Get RMA Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rma?status=new&q=Charlie",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rma"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "new"
+                },
+                {
+                  "key": "q",
+                  "value": "Charlie"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar catatan RMA."
+          },
+          "response": []
+        },
+        {
+          "name": "Get RMA Record By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rma/RMA_ID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rma",
+                "RMA_ID"
+              ]
+            },
+            "description": "Mendapatkan detail satu catatan RMA."
+          },
+          "response": []
+        },
+        {
+          "name": "Add RMA Action (Admin/SysAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"receive_unit\",\n  \"note\": \"Unit fisik diterima dari pelanggan. Kondisi sesuai deskripsi.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rma/RMA_ID/actions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rma",
+                "RMA_ID",
+                "actions"
+              ]
+            },
+            "description": "Menambahkan history/aksi ke catatan RMA. Memerlukan role 'Admin' atau 'SysAdmin'."
+          },
+          "response": []
+        }
+      ],
+      "description": "Rute untuk manajemen RMA (Return Merchandise Authorization). Memerlukan 'protect' (autentikasi)."
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Get Ticket Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/ticket-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "ticket-summary"
+              ]
+            },
+            "description": "Mendapatkan ringkasan tiket per bulan."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Inventory Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/inventory-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "inventory-summary"
+              ]
+            },
+            "description": "Mendapatkan ringkasan inventaris/stok."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Part Usage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/part-usage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "part-usage"
+              ]
+            },
+            "description": "Mendapatkan laporan penggunaan part dari tiket."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Common Issues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/common-issues",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "common-issues"
+              ]
+            },
+            "description": "Mendapatkan laporan masalah/keluhan yang paling umum."
+          },
+          "response": []
+        }
+      ],
+      "description": "Rute untuk laporan. Memerlukan role 'Admin' atau 'SysAdmin'."
+    },
+    {
+      "name": "Test (DEV ONLY)",
+      "item": [
+        {
+          "name": "Reset Database",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/test/reset-db",
+              "protocol": "http",
+              "host": [
+                "localhost:3000"
+              ],
+              "path": [
+                "api",
+                "test",
+                "reset-db"
+              ]
+            },
+            "description": "Hanya untuk development. Menghapus semua data dari koleksi."
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "noauth"
+      },
+      "description": "Rute khusus untuk development dan testing."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string",
+      "description": "Akan diisi otomatis oleh skrip tes 'Login'"
+    }
+  ]
 }

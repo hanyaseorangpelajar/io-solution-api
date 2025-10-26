@@ -43,7 +43,10 @@ const errorHandler = (err, req, res, next) => {
   const response = {
     status: "error",
     message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    ...(process.env.NODE_ENV === "development" && {
+      stack: err.stack,
+      error: err.toString(),
+    }),
   };
 
   if (res.headersSent) {

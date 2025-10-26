@@ -120,13 +120,27 @@ const UserSchema = new Schema(
   }
 );
 
-UserSchema.statics.isEmailTaken = async function (email, excludeUserId) {};
-UserSchema.statics.isUsernameTaken = async function (
-  username,
-  excludeUserId
-) {};
-UserSchema.pre("save", async function (next) {});
-UserSchema.methods.comparePassword = async function (candidatePassword) {};
+UserSchema.statics.isEmailTaken = async function (email, excludeUserId) {
+  const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
+  return !!user;
+};
+UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
+  const user = await this.findOne({ username, _id: { $ne: excludeUserId } });
+  return !!user;
+};
+
+UserSchema.pre("save", async function (next) {
+  const user = this;
+  if (user.isModified("password")) {
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password, salt);
+  }
+  next();
+});
+
+UserSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
