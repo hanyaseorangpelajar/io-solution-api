@@ -9,6 +9,7 @@ const rmaRecordRoutes = require("./rmaRecord.route");
 const ticketRoutes = require("./ticket.route");
 const testRoutes = require("./test.route");
 const userRoutes = require("./user.route");
+const auditRoute = require("./auditRecord.route");
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.use("/reports", reportRoutes);
 router.use("/rma", rmaRecordRoutes);
 router.use("/tickets", ticketRoutes);
 router.use("/users", userRoutes);
+router.use("/audits", auditRoute);
 
 if (process.env.NODE_ENV !== "production") {
   router.use("/test", testRoutes);
