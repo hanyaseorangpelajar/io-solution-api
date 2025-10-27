@@ -5,6 +5,7 @@ const {
   getUsers,
   getUserById,
   updateUserById,
+  deleteUserById,
 } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
 const { ROLES } = require("../models");
@@ -29,19 +30,11 @@ const getUserController = catchAsync(async (req, res) => {
 });
 
 const updateUserController = catchAsync(async (req, res) => {
-  const allowedUpdates = ["fullName", "role"];
-  const updates = Object.keys(req.body);
-  const isValidOperation = updates.every((update) =>
-    allowedUpdates.includes(update)
-  );
+  // HAPUS VALIDASI 'allowedUpdates' DARI SINI.
+  // SERVICE SUDAH MENANGANINYA DENGAN BENAR.
 
-  if (!isValidOperation) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Hanya dapat memperbarui nama lengkap dan peran"
-    );
-  }
-
+  // Anda bisa tetap menyimpan validasi 'role' jika mau,
+  // walaupun service juga sudah melakukannya.
   if (req.body.role && !ROLES.includes(req.body.role)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,

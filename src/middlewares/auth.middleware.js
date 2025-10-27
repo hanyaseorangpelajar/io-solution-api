@@ -1,6 +1,7 @@
 const { verifyToken } = require("../services");
 const { User } = require("../models");
 const { ApiError, catchAsync } = require("../utils");
+const httpStatus = require("http-status-codes");
 
 /**
  * Middleware untuk memverifikasi token JWT (Autentikasi) - Protect Route

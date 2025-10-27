@@ -51,7 +51,6 @@ const UserSchema = new Schema(
     },
     password: {
       type: String,
-      required: [true, "Password wajib diisi"],
       trim: true,
       minlength: [8, "Password minimal 8 karakter"],
       private: true,
@@ -68,20 +67,11 @@ const UserSchema = new Schema(
       default: "Teknisi",
       index: true,
     },
-    avatarUrl: { type: String, trim: true, default: null },
-    phone: {
-      type: String,
-      trim: true,
-      default: null,
-    },
-    department: { type: String, trim: true, default: null },
-
     active: {
       type: Boolean,
       default: true,
       index: true,
     },
-
     securitySettings: {
       type: SecuritySettingsSchema,
       default: () => ({}),

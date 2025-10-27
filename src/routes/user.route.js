@@ -12,7 +12,7 @@ router.use(authorize(["SysAdmin"]));
 router.post("/", userController.createUser);
 router.get("/", userController.getUsers);
 router.get("/:id", userController.getUser);
-router.put("/:id", userController.updateUser);
+router.patch("/:id", userController.updateUser);
 router.delete("/:id", userController.deleteUser);
 
 module.exports = router;

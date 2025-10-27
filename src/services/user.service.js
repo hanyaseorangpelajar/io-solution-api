@@ -8,34 +8,34 @@ const { ApiError } = require("../utils");
  * @param {Object} userBody - Data pengguna (username, email, password, name, role).
  * @returns {Promise<User>}
  */
-const createUser = async (userBody) => {
-  const { username, email, password, name, role } = userBody;
 
-  if (!username || !email || !password || !name || !role) {
+/**
+ * Membuat pengguna baru (oleh SysAdmin).
+ * @param {Object} userBody - Data pengguna (username, email, password, fullName, role). // <-- (Doc diperbarui)
+ * @returns {Promise<User>}
+ */
+const createUser = async (userBody) => {
+  const { username, email, password, fullName, role } = userBody;
+
+  if (!username || !email || !password || !fullName || !role) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Username, Email, Password, Nama, dan Role wajib diisi."
+      "Username, Email, Password, Nama Lengkap, dan Role wajib diisi."
     );
   }
   if (!ROLES.includes(role)) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      `Role '${role}' tidak valid. Pilihan: ${ROLES.join(", ")}`
-    );
   }
 
   if (await User.isUsernameTaken(username)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Username sudah digunakan.");
   }
   if (await User.isEmailTaken(email)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email sudah digunakan.");
   }
 
   const user = await User.create({
     username,
     email,
     password,
-    fullName: name,
+    fullName,
     role,
   });
   return user;
@@ -48,10 +48,16 @@ const createUser = async (userBody) => {
  * @returns {Promise<{results: User[], totalResults: number}>}
  */
 const getUsers = async (filter, options = {}) => {
-  const queryFilter = { active: true, ...filter };
-  if (filter.active === "all" || filter.active === false) {
+  // Mulai dengan filter yang masuk, TANPA default { active: true }
+  const queryFilter = { ...filter };
+
+  // Logika filter baru:
+  // Jika 'all' atau 'undefined' (default), hapus filter 'active' = tampilkan semua.
+  if (filter.active === "all" || filter.active === undefined) {
     delete queryFilter.active;
-    if (filter.active === false) queryFilter.active = false;
+  } else {
+    // Jika 'true' atau 'false', terapkan filter tersebut.
+    queryFilter.active = filter.active;
   }
 
   const { limit = 10, skip = 0, sort = { fullName: 1 } } = options;
@@ -102,14 +108,7 @@ const getUserById = async (id) => {
 const updateUserById = async (userId, updateBody) => {
   const user = await getUserById(userId);
 
-  const allowedUpdates = [
-    "fullName",
-    "role",
-    "active",
-    "phone",
-    "department",
-    "avatarUrl",
-  ];
+  const allowedUpdates = ["fullName", "role", "active"];
   const filteredUpdateBody = {};
   Object.keys(updateBody).forEach((key) => {
     if (allowedUpdates.includes(key)) {
@@ -141,19 +140,16 @@ const updateUserById = async (userId, updateBody) => {
  * @param {string} userId - ID Pengguna.
  * @returns {Promise<User>} User yang dinonaktifkan
  */
+// src/services/user.service.js
 const deleteUserById = async (userId) => {
-  const user = await getUserById(userId);
+  const user = await User.findByIdAndDelete(userId);
 
-  if (!user.active) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Pengguna ini sudah tidak aktif."
-    );
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
   }
-  user.active = false;
-  await user.save();
-  console.log(`User ${user.username} (ID: ${userId}) dinonaktifkan.`);
-  return user;
+
+  console.log(`User ${user.username} (ID: ${userId}) telah DIHAPUS.`);
+  return user; // Controller akan mengirim 204 jadi ini tidak masalah
 };
 
 /**
@@ -170,9 +166,6 @@ const updateUserProfile = async (userId, updateBody) => {
   const allowedUpdates = [
     "name",
     "email",
-    "phone",
-    "department",
-    "avatarUrl",
     "securitySettings",
     "notificationSettings",
   ];
