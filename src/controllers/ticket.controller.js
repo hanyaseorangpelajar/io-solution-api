@@ -32,6 +32,25 @@ const getTicketsController = catchAsync(async (req, res) => {
   if (req.query.priority) filter.priority = req.query.priority;
   if (req.query.assignee) filter.assignee = req.query.assignee;
 
+  if (req.query.q) {
+    const searchQuery = { $regex: req.query.q, $options: "i" };
+    filter.$or = [
+      { code: searchQuery },
+      { subject: searchQuery },
+      { requester: searchQuery },
+    ];
+  }
+
+  if (req.query.from || req.query.to) {
+    filter.createdAt = {};
+    if (req.query.from) {
+      filter.createdAt.$gte = new Date(req.query.from);
+    }
+    if (req.query.to) {
+      filter.createdAt.$lte = new Date(req.query.to);
+    }
+  }
+
   const options = {};
   const { page, limit, skip } = parsePagination(req.query);
   options.limit = limit;
