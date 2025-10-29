@@ -2,6 +2,7 @@ const httpStatus = require("http-status");
 const { register, login } = require("../services");
 
 const { catchAsync, ApiError } = require("../utils");
+const { get } = require("mongoose");
 
 /**
  * @route   POST /api/v1/auth/register
@@ -32,6 +33,12 @@ const loginController = catchAsync(async (req, res) => {
     );
   }
 
+  const getMeController = catchAsync(async (req, res) => {
+    res.status(httpStatus.OK).json({
+      user: req.user,
+    });
+  });
+
   const { user, token } = await login(identifier, password);
 
   res.status(httpStatus.OK).json({
@@ -41,7 +48,19 @@ const loginController = catchAsync(async (req, res) => {
   });
 });
 
+/**
+ * @route   GET /api/v1/auth/me
+ * @desc    Get data pengguna yang sedang login
+ * @access  Protected
+ */
+const getMeController = catchAsync(async (req, res) => {
+  res.status(httpStatus.OK).json({
+    user: req.user,
+  });
+});
+
 module.exports = {
   register: registerController,
   login: loginController,
+  getMe: getMeController,
 };
