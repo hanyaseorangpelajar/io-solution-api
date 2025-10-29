@@ -6,6 +6,8 @@ const rmaRecordService = require("./rmaRecord.service");
 const ticketService = require("./ticket.service");
 const tokenService = require("./token.service");
 const userService = require("./user.service");
+const stockMovementService = require("./stockMovement.service");
+const auditRecordService = require("./auditRecord.service");
 
 module.exports = {
   ...authService,
@@ -16,4 +18,6 @@ module.exports = {
   ...ticketService,
   ...tokenService,
   ...userService,
+  ...stockMovementService,
+  ...auditRecordService,
 };

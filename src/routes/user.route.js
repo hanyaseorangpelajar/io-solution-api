@@ -7,12 +7,20 @@ const router = express.Router();
 router.patch("/me", protect, userController.updateProfile);
 
 router.use(protect);
-router.use(authorize(["SysAdmin"]));
 
-router.post("/", userController.createUser);
-router.get("/", userController.getUsers);
-router.get("/:id", userController.getUser);
-router.patch("/:id", userController.updateUser);
-router.delete("/:id", userController.deleteUser);
+router.get(
+  "/",
+  authorize(["SysAdmin", "Admin", "Teknisi"]),
+  userController.getUsers
+);
+router.get(
+  "/:id",
+  authorize(["SysAdmin", "Admin", "Teknisi"]),
+  userController.getUser
+);
+
+router.post("/", authorize(["SysAdmin"]), userController.createUser);
+router.patch("/:id", authorize(["SysAdmin"]), userController.updateUser);
+router.delete("/:id", authorize(["SysAdmin"]), userController.deleteUser);
 
 module.exports = router;
