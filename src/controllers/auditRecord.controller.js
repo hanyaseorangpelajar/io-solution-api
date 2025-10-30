@@ -1,21 +1,29 @@
 const httpStatus = require("http-status");
 const { queryAuditRecords } = require("../services");
 const { catchAsync, parsePagination, parseSort } = require("../utils");
-const { AUDIT_STATUSES } = require("../models"); //
+const { AUDIT_STATUSES } = require("../models");
 
 const getAuditRecordsController = catchAsync(async (req, res) => {
   const filter = {};
   const { status, q } = req.query;
 
-  // Filter berdasarkan status audit (approved, rejected, dll)
   if (status && AUDIT_STATUSES.includes(status)) {
     filter.status = status;
   }
 
-  // Filter berdasarkan pencarian (kode tiket, catatan)
   if (q && typeof q === "string") {
     const regex = new RegExp(q.trim(), "i");
     filter.$or = [{ ticketCode: regex }, { notes: regex }];
+  }
+
+  if (req.query.from || req.query.to) {
+    filter.reviewedAt = {};
+    if (req.query.from) {
+      filter.reviewedAt.$gte = new Date(req.query.from);
+    }
+    if (req.query.to) {
+      filter.reviewedAt.$lte = new Date(req.query.to);
+    }
   }
 
   const options = {};
@@ -26,7 +34,6 @@ const getAuditRecordsController = catchAsync(async (req, res) => {
 
   const result = await queryAuditRecords(filter, options);
 
-  // Kirim respons dengan format paginasi
   res.send({
     results: result.results,
     page,

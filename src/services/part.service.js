@@ -23,7 +23,14 @@ const createPart = async (partBody) => {
  * @returns {Promise<Part[]>}
  */
 const getParts = async (filter) => {
-  return Part.find(filter).sort({ name: 1 });
+  const parts = await Part.find(filter).sort({ name: 1 }).lean();
+
+  return parts.map((part) => {
+    part.id = part._id.toString();
+    delete part._id;
+    delete part.__v;
+    return part;
+  });
 };
 
 /**
@@ -32,7 +39,13 @@ const getParts = async (filter) => {
  * @returns {Promise<Part>}
  */
 const getPartById = async (id) => {
-  return Part.findById(id);
+  const part = await Part.findById(id).lean();
+  if (part) {
+    part.id = part._id.toString();
+    delete part._id;
+    delete part.__v;
+  }
+  return part;
 };
 
 /**
@@ -42,7 +55,7 @@ const getPartById = async (id) => {
  * @returns {Promise<Part>}
  */
 const updatePartById = async (partId, updateBody) => {
-  const part = await getPartById(partId);
+  const part = await Part.findById(partId);
   if (!part) {
     throw new ApiError(httpStatus.NOT_FOUND, "Part tidak ditemukan");
   }
@@ -55,7 +68,12 @@ const updatePartById = async (partId, updateBody) => {
 
   Object.assign(part, updateBody);
   await part.save();
-  return part;
+
+  const result = part.toObject();
+  result.id = result._id.toString();
+  delete result._id;
+  delete result.__v;
+  return result;
 };
 
 /**
@@ -64,7 +82,7 @@ const updatePartById = async (partId, updateBody) => {
  * @returns {Promise<void>}
  */
 const deletePartById = async (partId) => {
-  const part = await getPartById(partId);
+  const part = await Part.findById(partId);
   if (!part) {
     throw new ApiError(httpStatus.NOT_FOUND, "Part tidak ditemukan");
   }

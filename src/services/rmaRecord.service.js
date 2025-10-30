@@ -9,73 +9,115 @@ const {
 } = require("../models");
 const { ApiError } = require("../utils");
 
-/**
- * Membuat record RMA baru.
- * @param {Object} rmaBody - Data RMA (title, customerName, productName, ticketId?, dll).
- * @param {string} userId - ID User yang membuat.
- * @returns {Promise<RmaRecord>}
- */
-const createRmaRecord = async (rmaBody, userId) => {
-  if (!rmaBody.title || !rmaBody.customerName || !rmaBody.productName) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Title, Nama Pelanggan, dan Nama Produk wajib diisi."
-    );
+const mapRmaRecord = (rma) => {
+  if (!rma) return null;
+  const result = rma.toObject ? rma.toObject() : { ...rma };
+
+  result.id = result._id ? result._id.toString() : null;
+
+  if (result.ticket && result.ticket._id) {
+    result.ticketId = result.ticket._id.toString();
+    if (result.ticket.toObject || typeof result.ticket === "object") {
+      const ticketObj = result.ticket.toObject
+        ? result.ticket.toObject()
+        : result.ticket;
+      ticketObj.id = ticketObj._id ? ticketObj._id.toString() : null;
+      result.ticket = ticketObj;
+    }
+  } else {
+    result.ticketId = null;
   }
 
-  if (rmaBody.ticketId) {
-    if (!mongoose.Types.ObjectId.isValid(rmaBody.ticketId)) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `ID Tiket '${rmaBody.ticketId}' tidak valid.`
+  if (Array.isArray(result.actions)) {
+    result.actions = result.actions.map((action) => {
+      action.id = action._id ? action._id.toString() : null;
+
+      if (action.by && action.by._id) {
+        if (action.by.toObject) {
+          const userObj = action.by.toObject();
+          userObj.id = userObj._id ? userObj._id.toString() : null;
+          delete userObj._id;
+          delete userObj.__v;
+          action.by = userObj;
+        } else {
+          action.by.id = action.by._id ? action.by._id.toString() : null;
+        }
+      }
+
+      if (action.at) {
+        try {
+          action.at = new Date(action.at).toISOString();
+        } catch (e) {
+          console.warn(
+            `Gagal mengonversi action.at ke ISOString: ${action.at}`,
+            e
+          );
+          action.at = null;
+        }
+      } else {
+        action.at = null;
+      }
+
+      delete action._id;
+      return action;
+    });
+  }
+  if (result.createdAt) {
+    try {
+      result.createdAt = new Date(result.createdAt).toISOString();
+    } catch (e) {
+      console.warn(
+        `Gagal mengonversi createdAt ke ISOString: ${result.createdAt}`,
+        e
       );
+      result.createdAt = null;
     }
-    const ticketExists = await Ticket.findById(rmaBody.ticketId);
-    if (!ticketExists) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `Tiket dengan ID ${rmaBody.ticketId} tidak ditemukan.`
-      );
-    }
-    rmaBody.ticket = rmaBody.ticketId;
+  } else {
+    result.createdAt = null;
   }
 
-  const rmaRecord = await RmaRecord.create(rmaBody);
-  return rmaRecord;
+  if (result.updatedAt) {
+    try {
+      result.updatedAt = new Date(result.updatedAt).toISOString();
+    } catch (e) {
+      console.warn(
+        `Gagal mengonversi updatedAt ke ISOString: ${result.updatedAt}`,
+        e
+      );
+      result.updatedAt = null;
+    }
+  } else {
+    result.updatedAt = null;
+  }
+  if (result.warranty?.purchaseDate) {
+    try {
+      result.warranty.purchaseDate = new Date(
+        result.warranty.purchaseDate
+      ).toISOString();
+    } catch (e) {
+      result.warranty.purchaseDate = null;
+    }
+  }
+
+  delete result._id;
+  delete result.__v;
+  return result;
 };
 
-/**
- * Mendapatkan daftar record RMA dengan filter dan populasi.
- * @param {Object} filter - Filter query Mongoose (misal { status: 'new' }).
- * @param {Object} options - Opsi query (limit, skip, sort).
- * @returns {Promise<{results: RmaRecord[], totalResults: number}>}
- */
+const createRmaRecord = async (rmaBody, userId) => {
+  const rmaRecord = await RmaRecord.create(rmaBody);
+  return mapRmaRecord(rmaRecord);
+};
+
 const queryRmaRecords = async (filter, options = {}) => {
   const { limit = 10, skip = 0, sort = { createdAt: -1 } } = options;
-
   const queryFilter = { ...filter };
-  if (filter.q && typeof filter.q === "string") {
-    const searchQuery = filter.q.trim();
-    const regex = new RegExp(searchQuery, "i");
-    queryFilter.$or = [
-      { code: regex },
-      { customerName: regex },
-      { productName: regex },
-      { productSku: regex },
-      { "warranty.serial": regex },
-    ];
-    delete queryFilter.q;
-  }
-  if (filter.status && !RMA_STATUSES.includes(filter.status)) {
-    console.warn(`Ignoring invalid RMA status filter: ${filter.status}`);
-    delete queryFilter.status;
-  }
 
   const rmaRecords = await RmaRecord.find(queryFilter)
-    .populate("ticket", "id code subject")
+    .populate("ticket", "id code subject _id")
     .populate({
       path: "actions.by",
-      select: "id name username",
+      select: "id name username _id",
     })
     .sort(sort)
     .skip(skip)
@@ -83,111 +125,29 @@ const queryRmaRecords = async (filter, options = {}) => {
     .lean();
 
   const totalResults = await RmaRecord.countDocuments(queryFilter);
-
-  const results = rmaRecords.map((rma) => {
-    rma.id = rma._id.toString();
-    if (rma.ticket) {
-      rma.ticketId = rma.ticket._id.toString();
-      delete rma.ticket;
-    } else {
-      rma.ticketId = null;
-    }
-    if (Array.isArray(rma.actions)) {
-      rma.actions = rma.actions.map((action) => {
-        action.id = action._id.toString();
-        if (action.by) {
-          action.by = action.by._id.toString();
-        }
-        action.at = action.at?.toISOString();
-        delete action._id;
-        delete action.__v;
-        return action;
-      });
-    }
-    rma.createdAt = rma.createdAt?.toISOString();
-    rma.updatedAt = rma.updatedAt?.toISOString();
-    if (rma.warranty?.purchaseDate) {
-      try {
-        rma.warranty.purchaseDate = new Date(
-          rma.warranty.purchaseDate
-        ).toISOString();
-      } catch (e) {
-        rma.warranty.purchaseDate = null;
-      }
-    }
-
-    delete rma._id;
-    delete rma.__v;
-    return rma;
-  });
-
+  const results = rmaRecords.map(mapRmaRecord);
   return { results, totalResults };
 };
 
-/**
- * Mendapatkan satu record RMA berdasarkan ID dengan detail lengkap.
- * @param {string} id - ID RMA.
- * @returns {Promise<RmaRecord>}
- */
 const getRmaRecordById = async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "ID RMA tidak valid.");
   }
   const rmaRecord = await RmaRecord.findById(id)
-    .populate("ticket", "id code subject deviceInfo")
-    .populate("actions.by", "id name username");
+    .populate("ticket", "id code subject deviceInfo _id")
+    .populate("actions.by", "id name username _id");
 
   if (!rmaRecord) {
     throw new ApiError(httpStatus.NOT_FOUND, "Record RMA tidak ditemukan.");
   }
-  return rmaRecord;
+  return mapRmaRecord(rmaRecord);
 };
 
-/**
- * Menambahkan aksi baru ke record RMA dan update status.
- * @param {string} rmaId - ID RMA.
- * @param {Object} actionBody - Data aksi (type, note, payload?).
- * @param {string} userId - ID User yang melakukan aksi (dari req.user).
- * @returns {Promise<RmaRecord>}
- */
 const addRmaAction = async (rmaId, actionBody, userId) => {
-  const rmaRecord = await getRmaRecordById(rmaId);
-
-  if (!actionBody.type || !RMA_ACTION_TYPES.includes(actionBody.type)) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      `Tipe aksi tidak valid. Pilihan: ${RMA_ACTION_TYPES.join(", ")}`
-    );
+  const rmaRecordDoc = await RmaRecord.findById(rmaId);
+  if (!rmaRecordDoc) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Record RMA tidak ditemukan.");
   }
-  const actionByUser = await User.findById(userId);
-  if (!actionByUser) {
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "User pelaku aksi tidak valid."
-    );
-  }
-
-  let newStatus = rmaRecord.status;
-  const actionType = actionBody.type;
-
-  const transitions = {
-    new: ["receive_unit", "cancel"],
-    received: ["send_to_vendor", "cancel"],
-    sent_to_vendor: ["vendor_update", "cancel"],
-    in_vendor: ["replace", "repair", "reject", "cancel"],
-    replaced: ["return_to_customer", "cancel"],
-    repaired: ["return_to_customer", "cancel"],
-    rejected: ["return_to_customer", "cancel"],
-  };
-
-  if (actionType === "receive_unit") newStatus = "received";
-  if (actionType === "send_to_vendor") newStatus = "sent_to_vendor";
-  if (actionType === "vendor_update") newStatus = "in_vendor";
-  if (actionType === "replace") newStatus = "replaced";
-  if (actionType === "repair") newStatus = "repaired";
-  if (actionType === "return_to_customer") newStatus = "returned";
-  if (actionType === "reject") newStatus = "rejected";
-  if (actionType === "cancel") newStatus = "cancelled";
 
   const newAction = {
     type: actionBody.type,
@@ -197,20 +157,14 @@ const addRmaAction = async (rmaId, actionBody, userId) => {
     at: new Date(),
   };
 
-  rmaRecord.actions.push(newAction);
-  rmaRecord.status = newStatus;
+  rmaRecordDoc.actions.push(newAction);
+  rmaRecordDoc.status = newStatus;
 
-  await rmaRecord.save();
+  await rmaRecordDoc.save();
 
-  const addedActionIndex = rmaRecord.actions.length - 1;
-  if (addedActionIndex >= 0) {
-    await rmaRecord.populate(
-      `actions.${addedActionIndex}.by`,
-      "id name username"
-    );
-  }
+  const updatedRma = await getRmaRecordById(rmaId);
 
-  return rmaRecord;
+  return updatedRma;
 };
 
 module.exports = {
