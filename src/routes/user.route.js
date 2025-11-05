@@ -5,7 +5,7 @@ const { protect, authorize } = require("../middlewares");
 const router = express.Router();
 
 router.patch("/me", protect, userController.updateProfile);
-
+router.patch("/me/password", protect, userController.changePassword);
 router.use(protect);
 
 router.get(

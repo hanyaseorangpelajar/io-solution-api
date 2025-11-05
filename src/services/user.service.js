@@ -1,7 +1,8 @@
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
-const { User, ROLES } = require("../models");
+const { ROLES } = require("../models");
 const { ApiError } = require("../utils");
+const { User } = require("../models/user.model");
 
 /**
  * Membuat pengguna baru (oleh SysAdmin).
@@ -48,15 +49,11 @@ const createUser = async (userBody) => {
  * @returns {Promise<{results: User[], totalResults: number}>}
  */
 const getUsers = async (filter, options = {}) => {
-  // Mulai dengan filter yang masuk, TANPA default { active: true }
   const queryFilter = { ...filter };
 
-  // Logika filter baru:
-  // Jika 'all' atau 'undefined' (default), hapus filter 'active' = tampilkan semua.
   if (filter.active === "all" || filter.active === undefined) {
     delete queryFilter.active;
   } else {
-    // Jika 'true' atau 'false', terapkan filter tersebut.
     queryFilter.active = filter.active;
   }
 
@@ -140,7 +137,6 @@ const updateUserById = async (userId, updateBody) => {
  * @param {string} userId - ID Pengguna.
  * @returns {Promise<User>} User yang dinonaktifkan
  */
-// src/services/user.service.js
 const deleteUserById = async (userId) => {
   const user = await User.findByIdAndDelete(userId);
 
@@ -149,7 +145,7 @@ const deleteUserById = async (userId) => {
   }
 
   console.log(`User ${user.username} (ID: ${userId}) telah DIHAPUS.`);
-  return user; // Controller akan mengirim 204 jadi ini tidak masalah
+  return user;
 };
 
 /**
@@ -211,6 +207,22 @@ const updateUserProfile = async (userId, updateBody) => {
   return user;
 };
 
+const changeUserPassword = async (userId, currentPassword, newPassword) => {
+  const user = await User.findById(userId).select("+password");
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
+  }
+
+  const isMatch = await user.isPasswordMatch(currentPassword);
+  if (!isMatch) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Password saat ini salah");
+  }
+
+  user.password = newPassword;
+  await user.save();
+};
+
 module.exports = {
   createUser,
   getUsers,
@@ -218,4 +230,5 @@ module.exports = {
   updateUserById,
   deleteUserById,
   updateUserProfile,
+  changeUserPassword,
 };

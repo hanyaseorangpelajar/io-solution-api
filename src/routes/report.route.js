@@ -11,5 +11,10 @@ router.get("/ticket-summary", reportController.getTicketSummary);
 router.get("/inventory-summary", reportController.getInventorySummary);
 router.get("/part-usage", reportController.getPartUsage);
 router.get("/common-issues", reportController.getCommonIssues);
+router.get(
+  "/dashboard-summary",
+  // authMiddleware, // <-- Aktifkan ini jika admin harus login
+  reportController.getDashboardSummary // <-- Memanggil controller baru kita
+);
 
 module.exports = router;

@@ -5,6 +5,8 @@ const {
   getUserById,
   updateUserById,
   deleteUserById,
+  updateUserProfile,
+  changeUserPassword,
 } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
 const { ROLES } = require("../models");
@@ -44,6 +46,14 @@ const updateProfileController = catchAsync(async (req, res) => {
   const user = await updateUserProfile(userId, req.body);
   res.send(user);
 });
+const changePasswordController = catchAsync(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  // Pastikan Anda sudah membuat logika 'changeUserPassword' di user.service.js
+  await changeUserPassword(req.user.id, currentPassword, newPassword);
+
+  res.status(httpStatus.NO_CONTENT).send();
+});
 
 module.exports = {
   createUser: createUserController,
@@ -51,5 +61,6 @@ module.exports = {
   getUser: getUserController,
   updateUser: updateUserController,
   deleteUser: deleteUserController,
+  changePassword: changePasswordController,
   updateProfile: updateProfileController,
 };

@@ -7,6 +7,43 @@ const {
 } = require("../models");
 const mongoose = require("mongoose");
 
+// ==============================================
+// FUNGSI BARU UNTUK DASHBOARD ADMIN
+// ==============================================
+
+/**
+ * Mendapatkan ringkasan jumlah tiket berdasarkan status untuk dashboard admin.
+ * @returns {Promise<object>} Object berisi jumlah tiket
+ */
+const getTicketSummary = async () => {
+  // Gunakan 'ServiceTicket' sesuai dengan impor Anda
+
+  // Hitung tiket yang baru masuk
+  const incoming = await ServiceTicket.countDocuments({
+    status: "NEW", // Sesuai dengan ticket.model.js
+  });
+
+  // Hitung tiket yang sedang dikerjakan
+  const inProgress = await ServiceTicket.countDocuments({
+    status: { $in: ["DIAGNOSIS", "IN_PROGRESS", "WAITING_PART"] }, // Sesuai dengan ticket.model.js
+  });
+
+  // Hitung tiket yang sudah selesai
+  const completed = await ServiceTicket.countDocuments({
+    status: { $in: ["RESOLVED", "CLOSED"] }, // Sesuai dengan ticket.model.js
+  });
+
+  return {
+    incoming,
+    inProgress,
+    completed,
+  };
+};
+
+// ==============================================
+// FUNGSI LAMA ANDA (TETAP ADA)
+// ==============================================
+
 /**
  * Menghasilkan ringkasan laporan tiket per bulan, sesuai format TicketAgg.
  * @returns {Promise<TicketAgg[]>}
@@ -19,6 +56,7 @@ const getTicketSummaryMonthly = async () => {
         month: { $month: "$createdAt" },
         status: 1,
         priority: 1,
+        // [CATATAN]: Periksa apakah status Anda "Selesai" atau "RESOLVED"
         isResolved: { $in: ["$status", ["Selesai", "Ditutup"]] },
       },
     },
@@ -207,6 +245,7 @@ const getCommonIssues = async () => {
 };
 
 module.exports = {
+  getTicketSummary, // <-- Fungsi baru kita tambahkan di sini
   getTicketSummaryMonthly,
   getInventorySummary,
   getPartUsageFromTickets,
