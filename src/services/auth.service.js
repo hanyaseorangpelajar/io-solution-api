@@ -1,5 +1,5 @@
 const httpStatus = require("http-status");
-const { User } = require("../models");
+const { User } = require("../models/user.model");
 const { generateToken } = require("./token.service");
 const { ApiError } = require("../utils");
 const { LoginAttempt } = require("../models/loginAttempt.model");
@@ -47,7 +47,7 @@ const login = async (username, password) => {
   );
 
   if (!user || !(await user.comparePassword(password))) {
-    await LoginAttempt.create({ username: uname, sukses: false });
+    await LoginAttempt.create({ usernameAttempt: uname, success: false });
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
       "Username atau password salah."
@@ -60,8 +60,12 @@ const login = async (username, password) => {
 
   const token = generateToken(user.id);
 
-  return { user, token };
-  await LoginAttempt.create({ userId: user.id, sukses: true });
+  await LoginAttempt.create({
+    user: user.id,
+    usernameAttempt: uname,
+    success: true,
+  });
+
   return { user, token };
 };
 

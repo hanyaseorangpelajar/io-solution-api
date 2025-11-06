@@ -1,5 +1,5 @@
 const httpStatus = require("http-status");
-const { register, login } = require("../services");
+const { authService } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
 
 /**
@@ -14,7 +14,7 @@ const registerController = catchAsync(async (req, res) => {
     role: req.body.role,
   };
 
-  const user = await register(userBody);
+  const user = await authService.register(userBody);
   res.status(httpStatus.CREATED).json({
     message: "Registrasi berhasil",
     user,
@@ -35,8 +35,7 @@ const loginController = catchAsync(async (req, res) => {
     );
   }
 
-  const { user, token } = await login(username, password);
-
+  const { user, token } = await authService.login(username, password);
   res.status(httpStatus.OK).json({
     message: "Login berhasil",
     user,

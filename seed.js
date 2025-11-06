@@ -114,7 +114,7 @@ const seedDatabase = async () => {
       });
     }
 
-    const createdUsers = await User.insertMany(usersData);
+    const createdUsers = await User.create(usersData);
     console.log(` - Berhasil memasukkan ${createdUsers.length} users.`);
     const teknisiUsers = createdUsers.filter((u) => u.role === "Teknisi");
     const adminUsers = createdUsers.filter(
