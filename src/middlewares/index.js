@@ -1,9 +1,5 @@
-const { protect, authorize } = require("./auth.middleware");
-const { notFound, errorHandler } = require("./error");
+const { protect } = require("./auth.middleware");
 
 module.exports = {
   protect,
-  authorize,
-  notFound,
-  errorHandler,
 };

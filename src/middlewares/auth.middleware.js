@@ -1,55 +1,27 @@
-const { verifyToken } = require("../services");
+const jwt = require("jsonwebtoken");
+const ApiError = require("../utils/ApiError");
+const { tokenService } = require("../services");
 const { User } = require("../models");
-const { ApiError, catchAsync } = require("../utils");
 const httpStatus = require("http-status-codes");
 
 /**
  * Middleware untuk memverifikasi token JWT (Autentikasi) - Protect Route
  */
-const protect = catchAsync(async (req, res, next) => {
-  let token;
-  const authHeader = req.headers.authorization;
-
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    token = authHeader.split(" ")[1];
-  }
-
-  if (!token) {
-    throw new ApiError(
-      httpStatus.UNAUTHORIZED,
-      "Akses ditolak. Token tidak ditemukan."
-    );
-  }
-
+const protect = async (req, res, next) => {
   try {
-    const payload = await verifyToken(token);
-
-    const user = await User.findById(payload.sub).select("-password");
-
-    if (!user) {
-      throw new ApiError(
-        httpStatus.UNAUTHORIZED,
-        "Pengguna pemilik token ini tidak lagi ditemukan."
-      );
-    }
-    if (!user.active) {
-      throw new ApiError(
-        httpStatus.FORBIDDEN,
-        "Akun pengguna ini tidak aktif."
-      );
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      throw new ApiError(401, "Please authenticate");
     }
 
-    req.user = user;
+    const decoded = await tokenService.verifyToken(token);
+    req.user = decoded;
 
     next();
   } catch (error) {
-    const statusCode =
-      error instanceof ApiError ? error.statusCode : httpStatus.UNAUTHORIZED;
-    const message =
-      error.message || "Token tidak valid atau terjadi kesalahan autentikasi.";
-    throw new ApiError(statusCode, message);
+    next(new ApiError(401, "Please authenticate"));
   }
-});
+};
 
 /**
  * Middleware untuk memverifikasi peran pengguna (Otorisasi)

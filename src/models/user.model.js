@@ -2,36 +2,15 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { Schema } = mongoose;
 
-const ROLES = ["Teknisi", "Admin", "SysAdmin"];
-
-const SecuritySettingsSchema = new Schema(
-  {
-    twoFactorEnabled: { type: Boolean, default: false },
-    recoveryEmail: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      default: null,
-    },
-  },
-  { _id: false }
-);
-const NotificationSettingsSchema = new Schema(
-  {
-    updates: { type: Boolean, default: true },
-    announcements: { type: Boolean, default: true },
-    alerts: { type: Boolean, default: true },
-    frequency: {
-      type: String,
-      enum: ["immediate", "daily", "weekly"],
-      default: "immediate",
-    },
-  },
-  { _id: false }
-);
+const ROLES = ["SysAdmin", "Admin", "Teknisi"];
 
 const UserSchema = new Schema(
   {
+    nama: {
+      type: String,
+      required: [true, "Nama wajib diisi"],
+      trim: true,
+    },
     username: {
       type: String,
       required: [true, "Username wajib diisi"],
@@ -40,58 +19,34 @@ const UserSchema = new Schema(
       lowercase: true,
       index: true,
     },
-    email: {
+    passwordHash: {
       type: String,
-      required: [true, "Email wajib diisi"],
-      unique: true,
-      trim: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Masukkan alamat email yang valid"],
-      index: true,
-    },
-    password: {
-      type: String,
-      trim: true,
-      minlength: [8, "Password minimal 8 karakter"],
+      required: [true, "Password wajib diisi"],
       private: true,
-    },
-    fullName: {
-      type: String,
-      required: [true, "Nama lengkap wajib diisi"],
-      trim: true,
+      select: false,
     },
     role: {
       type: String,
-      enum: ROLES,
-      required: [true, "Role wajib diisi"],
+      enum: {
+        values: ROLES,
+        message: "Role tidak valid ({VALUE})",
+      },
+      required: true,
       default: "Teknisi",
-      index: true,
     },
-    active: {
+    statusAktif: {
       type: Boolean,
       default: true,
       index: true,
     },
-    securitySettings: {
-      type: SecuritySettingsSchema,
-      default: () => ({}),
-      select: false,
-    },
-    notificationSettings: {
-      type: NotificationSettingsSchema,
-      default: () => ({}),
-      select: false,
-    },
   },
   {
-    timestamps: true,
+    timestamps: { createdAt: "dibuatPada", updatedAt: "diperbaruiPada" },
     toJSON: {
       transform(doc, ret) {
         ret.id = ret._id;
-        ret.name = ret.fullName;
         delete ret._id;
-        delete ret.fullName;
-        delete ret.password;
+        delete ret.passwordHash;
         delete ret.__v;
         return ret;
       },
@@ -99,10 +54,8 @@ const UserSchema = new Schema(
     toObject: {
       transform(doc, ret) {
         ret.id = ret._id;
-        ret.name = ret.fullName;
         delete ret._id;
-        delete ret.fullName;
-        delete ret.password;
+        delete ret.passwordHash;
         delete ret.__v;
         return ret;
       },
@@ -110,33 +63,32 @@ const UserSchema = new Schema(
   }
 );
 
-UserSchema.statics.isEmailTaken = async function (email, excludeUserId) {
-  const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
-  return !!user;
-};
-UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
-  const user = await this.findOne({ username, _id: { $ne: excludeUserId } });
-  return !!user;
+/**
+ * Cek apakah username sudah terdaftar
+ */
+UserSchema.statics.findByUsernameWithPassword = function (username) {
+  return this.findOne({ username }).select("+passwordHash");
 };
 
+/**
+ * Pre-save hook untuk hash password
+ */
 UserSchema.pre("save", async function (next) {
   const user = this;
-  if (user.isModified("password")) {
+  if (user.isModified("passwordHash")) {
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(user.password, salt);
+    user.passwordHash = await bcrypt.hash(user.passwordHash, salt);
   }
   next();
 });
 
+/**
+ * Method untuk membandingkan password (digunakan saat login)
+ */
 UserSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+  return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
+const User = mongoose.model("User", UserSchema);
 
-module.exports = {
-  User,
-  ROLES,
-  isEmailTaken: User.isEmailTaken,
-  isUsernameTaken: User.isUsernameTaken,
-};
+module.exports = { User, ROLES };

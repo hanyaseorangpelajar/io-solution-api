@@ -10,22 +10,29 @@ const {
 } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
 const { ROLES } = require("../models");
+
 const createUserController = catchAsync(async (req, res) => {
-  const user = await createUser(req.body);
+  const userBody = {
+    nama: req.body.fullName || req.body.name || req.body.nama,
+    username: req.body.username,
+    password: req.body.password,
+    role: req.body.role,
+  };
+
+  const user = await createUser(userBody);
   res.status(httpStatus.CREATED).send(user);
 });
+
 const getUsersController = catchAsync(async (req, res) => {
-  const filter = {};
-  const result = await getUsers(filter);
+  const result = await getUsers(req.query);
   res.send(result);
 });
+
 const getUserController = catchAsync(async (req, res) => {
   const user = await getUserById(req.params.id);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
-  }
   res.send(user);
 });
+
 const updateUserController = catchAsync(async (req, res) => {
   if (req.body.role && !ROLES.includes(req.body.role)) {
     throw new ApiError(
@@ -34,25 +41,45 @@ const updateUserController = catchAsync(async (req, res) => {
     );
   }
 
-  const user = await updateUserById(req.params.id, req.body);
+  const updateBody = {
+    nama: req.body.fullName || req.body.name || req.body.nama,
+    username: req.body.username,
+    password: req.body.password,
+    role: req.body.role,
+    statusAktif: req.body.statusAktif,
+  };
+
+  const user = await updateUserById(req.params.id, updateBody);
   res.send(user);
 });
+
 const deleteUserController = catchAsync(async (req, res) => {
   await deleteUserById(req.params.id);
   res.status(httpStatus.NO_CONTENT).send();
 });
+
 const updateProfileController = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  const user = await updateUserProfile(userId, req.body);
+
+  const updateBody = {
+    nama: req.body.fullName || req.body.name || req.body.nama,
+  };
+
+  const user = await updateUserProfile(userId, updateBody);
   res.send(user);
 });
+
 const changePasswordController = catchAsync(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Password saat ini dan password baru wajib diisi."
+    );
+  }
 
-  // Pastikan Anda sudah membuat logika 'changeUserPassword' di user.service.js
   await changeUserPassword(req.user.id, currentPassword, newPassword);
-
-  res.status(httpStatus.NO_CONTENT).send();
+  res.status(httpStatus.OK).send({ message: "Password berhasil diubah." });
 });
 
 module.exports = {
@@ -61,6 +88,6 @@ module.exports = {
   getUser: getUserController,
   updateUser: updateUserController,
   deleteUser: deleteUserController,
-  changePassword: changePasswordController,
   updateProfile: updateProfileController,
+  changePassword: changePasswordController,
 };

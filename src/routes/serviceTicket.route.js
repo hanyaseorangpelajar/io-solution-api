@@ -1,0 +1,51 @@
+const express = require("express");
+const { serviceTicketController } = require("../controllers");
+const { protect, authorize } = require("../middlewares");
+
+const router = express.Router();
+
+router.use(protect);
+
+router
+  .route("/")
+  .post(
+    authorize(["Admin", "Teknisi"]),
+    serviceTicketController.createTicketController
+  )
+  .get(
+    authorize(["Admin", "Teknisi"]),
+    serviceTicketController.getTicketsController
+  );
+
+router
+  .route("/:id")
+  .get(
+    authorize(["Admin", "Teknisi"]),
+    serviceTicketController.getTicketController
+  );
+
+router.patch(
+  "/:id/status",
+  authorize(["Admin", "Teknisi"]),
+  serviceTicketController.updateStatusController
+);
+
+router.post(
+  "/:id/items",
+  authorize(["Admin", "Teknisi"]),
+  serviceTicketController.addItemController
+);
+
+router.post(
+  "/:id/complete",
+  authorize(["Admin", "Teknisi"]),
+  serviceTicketController.completeTicketController
+);
+
+router.patch(
+  "/:id/assign",
+  authorize(["Admin"]),
+  serviceTicketController.assignTicketController
+);
+
+module.exports = router;

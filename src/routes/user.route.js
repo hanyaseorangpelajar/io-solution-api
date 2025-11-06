@@ -22,5 +22,4 @@ router.get(
 router.post("/", authorize(["Admin"]), userController.createUser);
 router.patch("/:id", authorize(["Admin"]), userController.updateUser);
 router.delete("/:id", authorize(["Admin"]), userController.deleteUser);
-
 module.exports = router;
