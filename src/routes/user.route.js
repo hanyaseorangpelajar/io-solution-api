@@ -19,8 +19,8 @@ router.get(
   userController.getUser
 );
 
-router.post("/", authorize(["SysAdmin"]), userController.createUser);
-router.patch("/:id", authorize(["SysAdmin"]), userController.updateUser);
-router.delete("/:id", authorize(["SysAdmin"]), userController.deleteUser);
+router.post("/", authorize(["Admin"]), userController.createUser);
+router.patch("/:id", authorize(["Admin"]), userController.updateUser);
+router.delete("/:id", authorize(["Admin"]), userController.deleteUser);
 
 module.exports = router;
