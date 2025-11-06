@@ -7,8 +7,7 @@ require("express-async-errors");
 
 const routesV1 = require("./routes");
 const { notFound, errorHandler } = require("./middlewares");
-const testRoutes = require("./routes/index");
-
+const testRoutes = require("./routes/test.route");
 const app = express();
 
 app.use(helmet());

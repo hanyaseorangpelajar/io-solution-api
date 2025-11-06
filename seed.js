@@ -1,598 +1,377 @@
+/**
+ * PENTING: File ini menggunakan @faker-js/faker
+ * Pastikan Anda telah menginstalnya:
+ * npm install @faker-js/faker --save-dev
+ *
+ * (Berdasarkan package.json Anda, ini seharusnya sudah ada)
+ */
+
+const genNomorTiket = (() => {
+  let seq = 1;
+  return () => {
+    const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
+    return `TKT-${ymd}-${String(seq++).padStart(4, "0")}`; // TKT-20251106-0001, dst.
+  };
+})();
+
 require("dotenv").config();
 const mongoose = require("mongoose");
-const { connectDB, disconnectDB } = require("./src/config/db");
+const { connectDB, disconnectDB } = require("./src/config/db"); //
+
+// ================== PERBAIKAN DI SINI ==================
+// Kita gunakan impor 'faker' standar (EN) untuk memastikan semua method (seperti .internet) tersedia.
+const { faker } = require("@faker-js/faker");
+// ===================================================
+
+// Impor model yang file-nya kita miliki
+const { User, ROLES } = require("./src/models/user.model"); //
+const { Customer } = require("./src/models/customer.model"); //
+const { Device } = require("./src/models/device.model"); //
 const {
-  User,
-  Part,
-  Ticket,
-  StockMovement,
-  RmaRecord,
-  AuditRecord,
-  KnowledgeEntry,
-  ROLES,
-  PART_CATEGORIES,
+  ServiceTicket,
   TICKET_STATUSES,
-  TICKET_PRIORITIES,
-  RMA_STATUSES,
-  RMA_ACTION_TYPES,
-  AUDIT_STATUSES,
-  STOCK_MOVE_TYPES,
-} = require("./src/models");
+} = require("./src/models/serviceTicket.model"); //
+const { KBTag } = require("./src/models/kbTag.model"); //
+const { KBEntry } = require("./src/models/kbEntry.model"); //
+const { LoginAttempt } = require("./src/models/loginAttempt.model"); //
 
-const usersData = [
-  {
-    username: "sysadmin",
-    email: "sysadmin@example.com",
-    password: "Password123!",
-    fullName: "Admin Utama",
-    role: "SysAdmin",
-    active: true,
-  },
-  {
-    username: "admin_toko",
-    email: "admin@example.com",
-    password: "Password123!",
-    fullName: "Admin Toko",
-    role: "Admin",
-    active: true,
-  },
-  {
-    username: "budi_teknisi",
-    email: "budi@example.com",
-    password: "Password123!",
-    fullName: "Budi Teknisi",
-    role: "Teknisi",
-    active: true,
-  },
-  {
-    username: "siti_teknisi",
-    email: "siti@example.com",
-    password: "Password123!",
-    fullName: "Siti Teknisi",
-    role: "Teknisi",
-    active: true,
-  },
-  {
-    username: "nonaktif",
-    email: "nonaktif@example.com",
-    password: "Password123!",
-    fullName: "User Non Aktif",
-    role: "Teknisi",
-    active: false,
-  },
-];
+// Fungsi helper untuk mengambil item acak dari array
+const pickRandom = (arr) => {
+  if (!arr || arr.length === 0) return null;
+  return arr[Math.floor(Math.random() * arr.length)];
+};
 
-const partsData = [
-  {
-    name: "CPU Intel Core i5-13400",
-    category: "cpu",
-    sku: "CPU-INT-13400",
-    unit: "pcs",
-    stock: 15,
-    price: 3500000,
-  },
-  {
-    name: "CPU AMD Ryzen 7 7700X",
-    category: "cpu",
-    sku: "CPU-AMD-7700X",
-    unit: "pcs",
-    stock: 10,
-    price: 5500000,
-  },
-  {
-    name: "Motherboard ASUS B760M",
-    category: "motherboard",
-    sku: "MB-ASU-B760M",
-    unit: "pcs",
-    stock: 20,
-    price: 2200000,
-  },
-  {
-    name: "Motherboard Gigabyte B650",
-    category: "motherboard",
-    sku: "MB-GIG-B650",
-    unit: "pcs",
-    stock: 18,
-    price: 2800000,
-  },
-  {
-    name: "RAM Corsair Vengeance 16GB (2x8GB) DDR4 3200",
-    category: "ram",
-    sku: "RAM-COR-D4-16K",
-    unit: "kit",
-    stock: 30,
-    price: 900000,
-  },
-  {
-    name: "RAM Kingston Fury Beast 32GB (2x16GB) DDR5 5600",
-    category: "ram",
-    sku: "RAM-KIN-D5-32K",
-    unit: "kit",
-    stock: 25,
-    price: 2100000,
-  },
-  {
-    name: "SSD Samsung 980 Pro 1TB NVMe Gen4",
-    category: "storage",
-    sku: "SSD-SAM-980P-1T",
-    unit: "pcs",
-    stock: 22,
-    price: 1800000,
-  },
-  {
-    name: "SSD Crucial MX500 2TB SATA",
-    category: "storage",
-    sku: "SSD-CRU-MX5-2T",
-    unit: "pcs",
-    stock: 12,
-    price: 1900000,
-  },
-  {
-    name: "HDD Seagate Barracuda 4TB",
-    category: "storage",
-    sku: "HDD-SEA-BAR-4T",
-    unit: "pcs",
-    stock: 8,
-    price: 1300000,
-    status: "inactive",
-  },
-  {
-    name: "GPU Nvidia GeForce RTX 4060 8GB",
-    category: "gpu",
-    sku: "GPU-NV-4060",
-    unit: "pcs",
-    stock: 7,
-    price: 6500000,
-  },
-  {
-    name: "GPU AMD Radeon RX 7600 8GB",
-    category: "gpu",
-    sku: "GPU-AMD-7600",
-    unit: "pcs",
-    stock: 9,
-    price: 5200000,
-  },
-  {
-    name: "PSU Corsair CX650M 650W Bronze",
-    category: "psu",
-    sku: "PSU-COR-CX650",
-    unit: "pcs",
-    stock: 25,
-    price: 950000,
-  },
-  {
-    name: "PSU Seasonic Focus GX 750W Gold",
-    category: "psu",
-    sku: "PSU-SEA-GX750",
-    unit: "pcs",
-    stock: 15,
-    price: 1600000,
-  },
-  {
-    name: "Case Cooler Master MasterBox Q300L",
-    category: "case",
-    sku: "CAS-CM-Q300L",
-    unit: "pcs",
-    stock: 10,
-    price: 600000,
-  },
-  {
-    name: "Case NZXT H5 Flow",
-    category: "case",
-    sku: "CAS-NZX-H5F",
-    unit: "pcs",
-    stock: 12,
-    price: 1100000,
-  },
-  {
-    name: "CPU Cooler Noctua NH-U12S",
-    category: "cooler",
-    sku: "COOL-NOC-U12S",
-    unit: "pcs",
-    stock: 14,
-    price: 980000,
-  },
-  {
-    name: "CPU Cooler Deepcool AK400",
-    category: "cooler",
-    sku: "COOL-DC-AK400",
-    unit: "pcs",
-    stock: 18,
-    price: 350000,
-  },
-  {
-    name: "NIC TP-Link TG-3468 Gigabit PCIe",
-    category: "nic",
-    sku: "NIC-TPL-3468",
-    unit: "pcs",
-    stock: 20,
-    price: 150000,
-  },
-  {
-    name: "Kabel UTP Cat 6 1 Meter",
-    category: "others",
-    sku: "CBL-UTP6-1M",
-    unit: "pcs",
-    stock: 100,
-    price: 15000,
-  },
-  {
-    name: "Thermal Paste Arctic MX-4 4g",
-    category: "others",
-    sku: "TP-ARC-MX4",
-    unit: "pcs",
-    stock: 40,
-    price: 80000,
-  },
-];
+// Fungsi helper untuk mengambil beberapa item acak unik
+const pickRandomMultiple = (arr, num) => {
+  if (!arr || arr.length === 0) return [];
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return [...new Set(shuffled.slice(0, num))]; // Gunakan Set untuk jaminan unik
+};
 
 const seedDatabase = async () => {
   try {
-    console.log("Connecting to database...");
-    await connectDB();
-    console.log("Database connected.");
+    console.log("Menyambungkan ke database...");
+    await connectDB(); //
+    console.log("Database tersambung.");
 
-    console.log("Clearing existing data (optional)...");
+    console.log("Membersihkan data lama...");
+    // Hapus dalam urutan ketergantungan (dari yang paling dependen)
+    await LoginAttempt.deleteMany({});
+    await KBEntry.deleteMany({});
+    await KBTag.deleteMany({});
+    await ServiceTicket.deleteMany({});
+    await Device.deleteMany({});
+    await Customer.deleteMany({});
     await User.deleteMany({});
-    await Part.deleteMany({});
-    await Ticket.deleteMany({});
-    await StockMovement.deleteMany({});
-    await RmaRecord.deleteMany({});
-    await AuditRecord.deleteMany({});
-    await KnowledgeEntry.deleteMany({});
-    console.log("Collections cleared.");
+    console.log("Koleksi dibersihkan.");
 
+    // ===========================================
+    // 1. Seed Users (Total: 20)
+    // ===========================================
     console.log("Seeding Users...");
-    const createdUsers = [];
-    for (const userData of usersData) {
-      const user = await User.create(userData);
-      createdUsers.push(user);
-      console.log(` - Created user: ${user.username} (Role: ${user.role})`);
-    }
-    const sysAdminUser = createdUsers.find((u) => u.role === "SysAdmin");
-    const adminUser = createdUsers.find((u) => u.role === "Admin");
-    const tekBudi = createdUsers.find((u) => u.username === "budi_teknisi");
-    const tekSiti = createdUsers.find((u) => u.username === "siti_teknisi");
-
-    if (!sysAdminUser || !adminUser || !tekBudi || !tekSiti) {
-      throw new Error("Gagal membuat user dasar, seeding dibatalkan.");
-    }
-
-    console.log("Seeding Parts...");
-    const createdParts = await Part.insertMany(partsData);
-    console.log(` - Inserted ${createdParts.length} parts.`);
-    const ramPart = createdParts.find(
-      (p) => p.category === "ram" && p.name.includes("Kingston")
-    );
-    const ssdPart = createdParts.find(
-      (p) => p.category === "storage" && p.name.includes("Samsung")
-    );
-    const psuPart = createdParts.find(
-      (p) => p.category === "psu" && p.name.includes("Corsair")
-    );
-    const coolerPart = createdParts.find(
-      (p) => p.category === "cooler" && p.name.includes("Deepcool")
-    );
-    const thermalPaste = createdParts.find(
-      (p) => p.category === "others" && p.name.includes("Thermal Paste")
-    );
-
-    if (!ramPart || !ssdPart || !psuPart || !coolerPart || !thermalPaste) {
-      console.warn("Warning: Beberapa part contoh tidak ditemukan ID-nya.");
-    }
-
-    console.log("Seeding Tickets...");
-    const ticketsData = [
-      {
-        subject: "PC Lambat Setelah Update Windows",
-        requester: "Customer A",
-        priority: "medium",
-        status: "open",
-        createdBy: adminUser._id,
-        description: "Booting jadi lama, aplikasi sering not responding.",
-      },
-      {
-        subject: "Layar Laptop Bergaris",
-        requester: "Customer B",
-        priority: "high",
-        status: "in_progress",
-        assignee: tekBudi._id,
-        createdBy: adminUser._id,
-        description: "Muncul garis vertikal warna-warni setelah terjatuh.",
-      },
-      {
-        subject: "Install Ulang OS + Backup Data",
-        requester: "Customer C",
-        priority: "low",
-        status: "open",
-        createdBy: adminUser._id,
-      },
-      {
-        subject: "Komputer Mati Total",
-        requester: "Customer D",
-        priority: "urgent",
-        status: "in_progress",
-        assignee: tekSiti._id,
-        createdBy: adminUser._id,
-        description: "Tidak ada tanda kehidupan saat tombol power ditekan.",
-      },
-      {
-        subject: "CPU Overheat Saat Gaming",
-        requester: "Customer E",
-        priority: "high",
-        status: "resolved",
-        assignee: tekBudi._id,
-        createdBy: adminUser._id,
-        description: "Suhu CPU mencapai 90C+",
-        resolution: {
-          rootCause: "Cooler CPU bawaan tidak memadai & thermal paste kering.",
-          solution:
-            "Ganti CPU Cooler aftermarket (Deepcool AK400) dan thermal paste baru.",
-          parts:
-            coolerPart && thermalPaste
-              ? [
-                  { partId: coolerPart._id, name: coolerPart.name, qty: 1 },
-                  { partId: thermalPaste._id, name: thermalPaste.name, qty: 1 },
-                ]
-              : [],
-          tags: ["cooling", "hardware", "gaming", "overheat"],
-          resolvedBy: tekBudi._id,
-          resolvedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        },
-      },
-      {
-        subject: "Upgrade RAM Laptop",
-        requester: "Customer F",
-        priority: "medium",
-        status: "resolved",
-        assignee: tekSiti._id,
-        createdBy: adminUser._id,
-        description: "Laptop lemot, minta tambah RAM dari 8GB ke 16GB.",
-        resolution: {
-          rootCause: "Kapasitas RAM kurang untuk multitasking.",
-          solution: "Tambah 1 keping RAM 8GB DDR4 SODIMM yang kompatibel.",
-          parts: ramPart
-            ? [{ partId: ramPart._id, name: ramPart.name, qty: 1 }]
-            : [],
-          tags: ["upgrade", "ram", "laptop", "performance"],
-          resolvedBy: tekSiti._id,
-          resolvedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        },
-      },
-      {
-        subject: "Printer Tidak Terdeteksi",
-        requester: "Customer G",
-        priority: "medium",
-        status: "closed",
-        assignee: tekBudi._id,
-        createdBy: adminUser._id,
-        description: "Printer Canon MG2570 tidak muncul.",
-        finalResult: "Instal driver ulang.",
-      },
-    ];
-    const createdTickets = [];
-    for (const ticketData of ticketsData) {
-      const ticket = await Ticket.create(ticketData);
-      createdTickets.push(ticket);
-    }
-    console.log(` - Created ${createdTickets.length} tickets.`);
-    const resolvedTicket1 = createdTickets.find(
-      (t) => t.subject === "CPU Overheat Saat Gaming"
-    );
-    const resolvedTicket2 = createdTickets.find(
-      (t) => t.subject === "Upgrade RAM Laptop"
-    );
-
-    console.log("Seeding Stock Movements...");
-    const stockMovementsData = [];
-    if (ramPart)
-      stockMovementsData.push({
-        part: ramPart._id,
-        partNameSnapshot: ramPart.name,
-        type: "in",
-        quantity: 50,
-        reference: "PO-1001",
-        user: adminUser._id,
-        notes: "Stok awal RAM Kingston",
-      });
-    if (ssdPart)
-      stockMovementsData.push({
-        part: ssdPart._id,
-        partNameSnapshot: ssdPart.name,
-        type: "in",
-        quantity: 30,
-        reference: "PO-1002",
-        user: adminUser._id,
-        notes: "Stok awal SSD Samsung",
-      });
-    if (psuPart)
-      stockMovementsData.push({
-        part: psuPart._id,
-        partNameSnapshot: psuPart.name,
-        type: "in",
-        quantity: 25,
-        reference: "PO-1003",
-        user: adminUser._id,
-      });
-    if (resolvedTicket1 && coolerPart)
-      stockMovementsData.push({
-        part: coolerPart._id,
-        partNameSnapshot: coolerPart.name,
-        type: "out",
-        quantity: 1,
-        reference: resolvedTicket1.code,
-        user: tekBudi._id,
-        notes: "Dipakai u/ tiket overheat",
-      });
-    if (resolvedTicket1 && thermalPaste)
-      stockMovementsData.push({
-        part: thermalPaste._id,
-        partNameSnapshot: thermalPaste.name,
-        type: "out",
-        quantity: 1,
-        reference: resolvedTicket1.code,
-        user: tekBudi._id,
-        notes: "Dipakai u/ tiket overheat",
-      });
-    if (resolvedTicket2 && ramPart)
-      stockMovementsData.push({
-        part: ramPart._id,
-        partNameSnapshot: ramPart.name,
-        type: "out",
-        quantity: 1,
-        reference: resolvedTicket2.code,
-        user: tekSiti._id,
-        notes: "Dipakai u/ upgrade RAM",
-      });
-    if (ssdPart)
-      stockMovementsData.push({
-        part: ssdPart._id,
-        partNameSnapshot: ssdPart.name,
-        type: "adjust",
-        quantity: 1,
-        reference: "ADJ-001",
-        user: adminUser._id,
-        notes: "Koreksi stok fisik, hilang 1",
-      });
-
-    if (stockMovementsData.length > 0) {
-      const createdMovements = await StockMovement.insertMany(
-        stockMovementsData
-      );
-      console.log(` - Inserted ${createdMovements.length} stock movements.`);
-      const adjMovement = createdMovements.find((m) => m.type === "adjust");
-      if (adjMovement && ssdPart) {
-        await Part.updateOne(
-          { _id: ssdPart._id },
-          { $inc: { stock: -adjMovement.quantity } }
-        );
-        console.log(`   - Adjusted stock for ${ssdPart.name}`);
-      }
-    } else {
-      console.log(" - No stock movements to seed.");
-    }
-
-    console.log("Seeding RMA Records...");
-    const rmaRecordsData = [];
-    if (resolvedTicket1)
-      rmaRecordsData.push({
-        title: "Klaim Garansi Cooler CPU Bawaan",
-        customerName: "Customer E",
-        productName: "Cooler Stock Intel",
-        ticket: resolvedTicket1._id,
-        issueDesc: "Tidak mampu mendinginkan CPU",
-        status: "new",
-      });
-    rmaRecordsData.push({
-      title: "Klaim PSU Mati",
-      customerName: "Customer H",
-      productName: "PSU Merk X 500W",
-      issueDesc: "PSU mati total setelah 6 bulan",
-      status: "received",
-      warranty: {
-        purchaseDate: new Date(Date.now() - 7 * 30 * 24 * 60 * 60 * 1000),
-        warrantyMonths: 12,
-        serial: "PSUX-123",
-        vendor: "Distributor C",
-      },
+    const usersData = [];
+    // Tambahkan pengguna inti
+    usersData.push({
+      nama: "Admin Utama",
+      username: "sysadmin",
+      passwordHash: "Password123!",
+      role: "SysAdmin",
+      statusAktif: true,
     });
-    const createdRmas = [];
-    for (const rmaData of rmaRecordsData) {
-      const rma = await RmaRecord.create(rmaData);
-      if (rma.status === "received") {
-        await RmaRecord.findByIdAndUpdate(rma._id, {
-          $push: {
-            actions: {
-              type: "receive_unit",
-              note: "Unit PSU diterima",
-              by: adminUser._id,
-              at: new Date(),
-            },
+    usersData.push({
+      nama: "Admin Toko",
+      username: "admin",
+      passwordHash: "Password123!",
+      role: "Admin",
+      statusAktif: true,
+    });
+    usersData.push({
+      nama: "Budi Teknisi",
+      username: "budi",
+      passwordHash: "Password123!",
+      role: "Teknisi",
+      statusAktif: true,
+    });
+    usersData.push({
+      nama: "Siti Teknisi",
+      username: "siti",
+      passwordHash: "Password123!",
+      role: "Teknisi",
+      statusAktif: true,
+    });
+
+    // Tambahkan 16 pengguna palsu
+    for (let i = 0; i < 16; i++) {
+      const firstName = faker.person.firstName();
+      const lastName = faker.person.lastName();
+      usersData.push({
+        nama: `${firstName} ${lastName}`,
+        // Memanggil faker.internet.userName() (sekarang harusnya ada)
+        username: faker.internet.username().toLowerCase(),
+        passwordHash: "Password1all!",
+        role: pickRandom(["Admin", "Teknisi"]),
+        statusAktif: faker.datatype.boolean({ probability: 0.9 }),
+      });
+    }
+
+    const createdUsers = await User.insertMany(usersData);
+    console.log(` - Berhasil memasukkan ${createdUsers.length} users.`);
+    const teknisiUsers = createdUsers.filter((u) => u.role === "Teknisi");
+    const adminUsers = createdUsers.filter(
+      (u) => u.role === "Admin" || u.role === "SysAdmin"
+    );
+
+    // ===========================================
+    // 2. Seed Customers (Total: 30)
+    // ===========================================
+    console.log("Seeding Customers...");
+    const customersData = [];
+    for (let i = 0; i < 30; i++) {
+      customersData.push({
+        nama: faker.person.fullName(),
+        noHp: faker.phone.number("0812########"), // Format ini spesifik ID, tapi mungkin masih berfungsi
+        alamat: faker.location.streetAddress(),
+        catatan: faker.lorem.sentence(),
+      });
+    }
+    const createdCustomers = await Customer.insertMany(customersData);
+    console.log(` - Berhasil memasukkan ${createdCustomers.length} customers.`);
+
+    // ===========================================
+    // 3. Seed Devices (Total: 20+)
+    // ===========================================
+    console.log("Seeding Devices...");
+    const devicesData = [];
+    const deviceTypes = [
+      "Laptop",
+      "PC Desktop",
+      "Printer",
+      "Monitor",
+      "Router",
+    ];
+    const brands = ["Asus", "Lenovo", "HP", "Dell", "Acer", "Samsung", "Canon"];
+
+    // Buat 20 perangkat
+    for (let i = 0; i < 20; i++) {
+      const tipe = pickRandom(deviceTypes);
+      devicesData.push({
+        customerId: pickRandom(createdCustomers)._id,
+        brand: pickRandom(brands),
+        model: `${faker.commerce.productName()}-${faker.string
+          .alphanumeric(4)
+          .toUpperCase()}`,
+        serialNumber: faker.string.alphanumeric(12).toUpperCase(),
+        tipe: tipe,
+        deskripsi: `Perangkat ${faker.commerce.productAdjective()}`,
+      });
+    }
+
+    // Pastikan setiap customer punya setidaknya 1 perangkat
+    for (const cust of createdCustomers) {
+      const hasDevice = devicesData.some((d) => d.customerId.equals(cust._id));
+      if (!hasDevice) {
+        const tipe = pickRandom(deviceTypes);
+        devicesData.push({
+          customerId: cust._id,
+          brand: pickRandom(brands),
+          model: `${faker.commerce.productName()}-${faker.string
+            .alphanumeric(4)
+            .toUpperCase()}`,
+          serialNumber: faker.string.alphanumeric(12).toUpperCase(),
+          tipe: tipe,
+          deskripsi: `Perangkat ${faker.commerce.productAdjective()}`,
+        });
+      }
+    }
+    const createdDevices = await Device.insertMany(devicesData);
+    console.log(` - Berhasil memasukkan ${createdDevices.length} devices.`);
+
+    // ===========================================
+    // 4. Seed KBTags (Total: 20)
+    // ===========================================
+    console.log("Seeding KBTags...");
+    const tags = [
+      "hardware",
+      "software",
+      "windows",
+      "macos",
+      "linux",
+      "printer",
+      "jaringan",
+      "virus",
+      "overheat",
+      "bluescreen",
+      "mati-total",
+      "upgrade",
+      "instalasi",
+      "backup-data",
+      "laptop",
+      "pc-desktop",
+      "driver",
+      "lcd",
+      "keyboard",
+      "baterai",
+    ];
+    const tagsData = tags.map((nama) => ({ nama }));
+    const createdTags = await KBTag.insertMany(tagsData);
+    console.log(` - Berhasil memasukkan ${createdTags.length} KB tags.`);
+
+    // ===========================================
+    // 5. Seed ServiceTickets (Total: 30)
+    // ===========================================
+    console.log("Seeding Service Tickets...");
+    const ticketsData = [];
+    let SelesaiTicketsForKB = []; // Simpan tiket selesai untuk KB
+
+    for (let i = 0; i < 30; i++) {
+      const device = pickRandom(createdDevices);
+      const customerId = device.customerId;
+      const teknisi = pickRandom(teknisiUsers);
+      const status = pickRandom(TICKET_STATUSES);
+
+      const ticket = {
+        nomorTiket: genNomorTiket(),
+        customerId: customerId,
+        deviceId: device._id,
+        teknisiId: status !== "Diagnosis" ? teknisi?._id : null,
+        keluhanAwal: faker.lorem.sentence({ min: 5, max: 15 }),
+        status: status,
+        tanggalMasuk: faker.date.past({ years: 1 }),
+        tanggalSelesai:
+          status === "Selesai" || status === "Dibatalkan"
+            ? faker.date.recent()
+            : null,
+        statusHistory: [
+          {
+            statusBaru: "Diagnosis",
+            catatan: "Tiket dibuat oleh sistem.",
+            waktu: faker.date.past({ years: 1 }),
           },
+        ],
+        replacementItems:
+          status === "Selesai"
+            ? [
+                {
+                  namaKomponen: faker.commerce.productName(),
+                  qty: 1,
+                  keterangan: "Komponen pengganti",
+                },
+              ]
+            : [],
+      };
+
+      if (status !== "Diagnosis") {
+        ticket.statusHistory.push({
+          statusBaru: status,
+          catatan: `Status diubah ke ${status}`,
+          waktu: new Date(),
         });
       }
-      createdRmas.push(rma);
-    }
-    console.log(` - Created ${createdRmas.length} RMA records.`);
 
-    console.log("Seeding Audit Records...");
-    const auditRecordsData = [];
-    if (resolvedTicket1)
-      auditRecordsData.push({
-        ticket: resolvedTicket1._id,
-        ticketCode: resolvedTicket1.code,
-        reviewer: adminUser._id,
-        status: "approved",
-        score: 90,
-        notes: "Solusi tepat, komponen diganti.",
-        tags: ["cooling", "hardware"],
-        publish: true,
-        reviewedAt: new Date(),
-      });
-    if (resolvedTicket2)
-      auditRecordsData.push({
-        ticket: resolvedTicket2._id,
-        ticketCode: resolvedTicket2.code,
-        reviewer: adminUser._id,
-        status: "approved",
-        score: 85,
-        notes: "Upgrade RAM berhasil.",
-        tags: ["upgrade", "ram", "laptop"],
-        publish: true,
-        reviewedAt: new Date(),
-      });
-    if (auditRecordsData.length > 0) {
-      const createdAudits = await AuditRecord.insertMany(auditRecordsData);
-      console.log(` - Inserted ${createdAudits.length} audit records.`);
-    } else {
-      console.log(" - No audit records to seed.");
+      ticketsData.push(ticket);
+    }
+    const createdTickets = await ServiceTicket.insertMany(ticketsData);
+    console.log(
+      ` - Berhasil memasukkan ${createdTickets.length} service tickets.`
+    );
+
+    // ===========================================
+    // 6. Seed KBEntries (Total: 20)
+    // ===========================================
+    console.log("Seeding Knowledge Base Entries...");
+    const kbEntriesData = [];
+    // Ambil 20 tiket untuk dijadikan KB, prioritaskan yang selesai
+    let ticketsForKB = createdTickets.filter((t) => t.status === "Selesai");
+    if (ticketsForKB.length < 20) {
+      const otherTickets = createdTickets.filter((t) => t.status !== "Selesai");
+      ticketsForKB = [
+        ...ticketsForKB,
+        ...otherTickets.slice(0, 20 - ticketsForKB.length),
+      ];
     }
 
-    console.log("Seeding Knowledge Entries...");
-    const knowledgeEntriesData = [];
-    const auditsToPublish = await AuditRecord.find({
-      publish: true,
-      status: "approved",
-    }).populate("ticket");
-    for (const audit of auditsToPublish) {
-      const ticket = audit.ticket;
-      if (ticket && ticket.resolution) {
-        const existingKE = await KnowledgeEntry.findOne({
-          sourceTicket: ticket._id,
-        });
-        if (!existingKE) {
-          const { rootCause, solution, parts } = ticket.resolution;
-          const relatedComponentIds = parts.map((p) => p.partId);
-          knowledgeEntriesData.push({
-            title: `Solusi Audit: ${ticket.subject || `Tiket ${ticket.code}`}`,
-            symptom: ticket.initialComplaint || ticket.subject || rootCause,
-            diagnosis: rootCause,
-            solution: solution,
-            relatedComponents: relatedComponentIds,
-            sourceTicket: ticket._id,
-            tags: audit.tags,
-            isPublished: true,
-          });
-        }
-      }
+    // Pastikan kita punya 20 tiket
+    if (ticketsForKB.length < 20) {
+      console.warn(
+        ` - Hanya ${ticketsForKB.length} tiket tersedia untuk dibuat KB.`
+      );
     }
-    if (knowledgeEntriesData.length > 0) {
-      const createdKE = await KnowledgeEntry.insertMany(knowledgeEntriesData);
+
+    for (const ticket of ticketsForKB.slice(0, 20)) {
+      const device = createdDevices.find((d) => d._id.equals(ticket.deviceId));
+      const modelPerangkat = device
+        ? `${device.brand} ${device.model}`
+        : "Tidak diketahui";
+
+      kbEntriesData.push({
+        gejala: ticket.keluhanAwal,
+        modelPerangkat: modelPerangkat,
+        diagnosis: faker.lorem.sentence(5),
+        solusi: faker.lorem.paragraph(2),
+        sourceTicketId: ticket._id,
+        dibuatOleh: pickRandom(adminUsers)._id,
+        tags: pickRandomMultiple(
+          createdTags,
+          faker.number.int({ min: 1, max: 3 })
+        ).map((t) => t._id),
+      });
+    }
+
+    // Hapus duplikat sourceTicketId jika ada (meskipun seharusnya tidak)
+    const uniqueKbEntries = Array.from(
+      new Map(
+        kbEntriesData.map((item) => [item.sourceTicketId.toString(), item])
+      ).values()
+    );
+
+    if (uniqueKbEntries.length > 0) {
+      const createdKbEntries = await KBEntry.insertMany(uniqueKbEntries);
       console.log(
-        ` - Inserted ${createdKE.length} knowledge entries from audits.`
+        ` - Berhasil memasukkan ${createdKbEntries.length} KB entries.`
       );
     } else {
-      console.log(" - No knowledge entries to seed from audits.");
+      console.log(` - Tidak ada tiket untuk dibuat KB, KBEntry dilewati.`);
     }
 
-    console.log("✅ Database seeding finished successfully!");
+    // ===========================================
+    // 7. Seed LoginAttempts (Total: 50)
+    // ===========================================
+    console.log("Seeding Login Attempts...");
+    const loginAttemptsData = [];
+    for (let i = 0; i < 50; i++) {
+      const success = faker.datatype.boolean({ probability: 0.7 }); // 70% berhasil
+      const user = pickRandom(createdUsers);
+      loginAttemptsData.push({
+        user: success ? user._id : null,
+        usernameAttempt: success
+          ? user.username
+          : pickRandom([
+              user.username,
+              faker.internet.username().toLowerCase(),
+            ]),
+        ip: faker.internet.ip(),
+        userAgent: faker.internet.userAgent(),
+        success: success,
+      });
+    }
+    const createdLoginAttempts = await LoginAttempt.insertMany(
+      loginAttemptsData
+    );
+    console.log(
+      ` - Berhasil memasukkan ${createdLoginAttempts.length} login attempts.`
+    );
+
+    // ===========================================
+    // Selesai
+    // ===========================================
+    console.log("✅ Database seeding selesai!");
   } catch (error) {
-    console.error("❌ Error seeding database:", error);
+    console.error("❌ Terjadi error saat seeding database:", error);
     process.exitCode = 1;
   } finally {
-    console.log("Disconnecting database...");
-    await disconnectDB();
-    console.log("Database disconnected.");
+    console.log("Menutup koneksi database...");
+    await disconnectDB(); //
+    console.log("Koneksi database ditutup.");
   }
 };
 
