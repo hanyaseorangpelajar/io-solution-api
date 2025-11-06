@@ -10,6 +10,13 @@ const JWT_SECRET =
       })()
     : "rahasia-super-rahasia-default");
 
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
+
+/**
+ * Generate JWT token
+ * @param {string} userId - ID pengguna dari Mongoose
+ * @returns {string} Token JWT
+ */
 const generateToken = (userId) => {
   if (!userId) {
     throw new Error("UserId diperlukan untuk generate token.");
@@ -18,7 +25,12 @@ const generateToken = (userId) => {
     sub: userId,
     iat: Math.floor(Date.now() / 1000),
   };
+
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
 };
+
 /**
  * Verify JWT token and return payload
  * @param {string} token
