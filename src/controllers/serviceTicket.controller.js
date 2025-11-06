@@ -1,28 +1,23 @@
 const httpStatus = require("http-status");
-const {
-  createServiceTicket,
-  getServiceTickets,
-  getServiceTicketById,
-  assignServiceTicket,
-  updateServiceTicketStatus,
-  addReplacementItem,
-  completeTicketAndCreateKB,
-} = require("../services");
+const { serviceTicketService } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
 
 const createTicketController = catchAsync(async (req, res) => {
   const createdById = req.user.id;
-  const ticket = await createServiceTicket(req.body, createdById);
+  const ticket = serviceTicketService.createServiceTicket(
+    req.body,
+    createdById
+  );
   res.status(httpStatus.CREATED).send(ticket);
 });
 
 const getTicketsController = catchAsync(async (req, res) => {
-  const result = await getServiceTickets(req.query);
+  const result = serviceTicketService.getServiceTickets(req.query);
   res.send(result);
 });
 
 const getTicketController = catchAsync(async (req, res) => {
-  const ticket = await getServiceTicketById(req.params.id);
+  const ticket = serviceTicketService.getServiceTicketById(req.params.id);
   res.send(ticket);
 });
 
@@ -31,7 +26,7 @@ const assignTicketController = catchAsync(async (req, res) => {
   if (!teknisiId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "teknisiId wajib diisi.");
   }
-  const ticket = await assignServiceTicket(
+  const ticket = serviceTicketService.assignServiceTicket(
     req.params.id,
     teknisiId,
     req.user.id
@@ -41,7 +36,7 @@ const assignTicketController = catchAsync(async (req, res) => {
 
 const updateStatusController = catchAsync(async (req, res) => {
   const { status, catatan } = req.body;
-  const ticket = await updateServiceTicketStatus(
+  const ticket = serviceTicketService.updateServiceTicketStatus(
     req.params.id,
     { status, catatan },
     req.user.id
@@ -50,13 +45,16 @@ const updateStatusController = catchAsync(async (req, res) => {
 });
 
 const addItemController = catchAsync(async (req, res) => {
-  const ticket = await addReplacementItem(req.params.id, req.body);
+  const ticket = serviceTicketService.addReplacementItem(
+    req.params.id,
+    req.body
+  );
   res.send(ticket);
 });
 
 const completeTicketController = catchAsync(async (req, res) => {
   const { diagnosis, solusi } = req.body;
-  const result = await completeTicketAndCreateKB(
+  const result = serviceTicketService.completeTicketAndCreateKB(
     req.params.id,
     { diagnosis, solusi },
     req.user.id

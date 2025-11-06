@@ -12,8 +12,8 @@ const router = express.Router();
 router.use("/auth", authRoutes);
 router.use("/health", healthRoutes);
 router.use("/kb-entry", kbEntryRoute);
-router.use("/service-ticket", serviceTicketRoute);
-router.use("/user", userRoutes);
+router.use("/tickets", serviceTicketRoute);
+router.use("/users", userRoutes);
 
 if (process.env.NODE_ENV !== "production") {
   router.use("/test", testRoutes);

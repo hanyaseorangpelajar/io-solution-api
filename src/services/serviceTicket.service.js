@@ -1,12 +1,13 @@
 const httpStatus = require("http-status");
+// MENJADI INI:
 const {
   ServiceTicket,
   TICKET_STATUSES,
-  Customer,
-  Device,
-  KBEntry,
-  User,
-} = require("../models");
+} = require("../models/serviceTicket.model");
+const { Customer } = require("../models/customer.model");
+const { Device } = require("../models/device.model");
+const { KBEntry } = require("../models/kbEntry.model");
+const { User } = require("../models/user.model");
 const { ApiError } = require("../utils");
 
 /**
@@ -79,7 +80,6 @@ const createServiceTicket = async (ticketBody, createdById) => {
  * Mengambil daftar semua tiket servis.
  */
 const getServiceTickets = async (filter) => {
-  // Whitelist filter aman
   const safe = {};
   if (filter?.status) safe.status = filter.status;
   if (filter?.teknisiId) safe.teknisiId = filter.teknisiId;

@@ -1,13 +1,5 @@
 const httpStatus = require("http-status");
-const {
-  createUser,
-  getUsers,
-  getUserById,
-  updateUserById,
-  deleteUserById,
-  updateUserProfile,
-  changeUserPassword,
-} = require("../services");
+const { userService } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
 const { ROLES } = require("../models");
 
@@ -19,17 +11,17 @@ const createUserController = catchAsync(async (req, res) => {
     role: req.body.role,
   };
 
-  const user = await createUser(userBody);
+  const user = await userService.createUser(userBody);
   res.status(httpStatus.CREATED).send(user);
 });
 
 const getUsersController = catchAsync(async (req, res) => {
-  const result = await getUsers(req.query);
+  const result = await userService.getUsers(req.query);
   res.send(result);
 });
 
 const getUserController = catchAsync(async (req, res) => {
-  const user = await getUserById(req.params.id);
+  const user = await userService.getUserById(req.params.id);
   res.send(user);
 });
 
@@ -49,12 +41,12 @@ const updateUserController = catchAsync(async (req, res) => {
     statusAktif: req.body.statusAktif,
   };
 
-  const user = await updateUserById(req.params.id, updateBody);
+  const user = await userService.updateUserById(req.params.id, updateBody);
   res.send(user);
 });
 
 const deleteUserController = catchAsync(async (req, res) => {
-  await deleteUserById(req.params.id);
+  await userService.deleteUserById(req.params.id);
   res.status(httpStatus.NO_CONTENT).send();
 });
 
@@ -65,7 +57,7 @@ const updateProfileController = catchAsync(async (req, res) => {
     nama: req.body.fullName || req.body.name || req.body.nama,
   };
 
-  const user = await updateUserProfile(userId, updateBody);
+  const user = await userService.updateUserProfile(userId, updateBody);
   res.send(user);
 });
 
@@ -78,7 +70,11 @@ const changePasswordController = catchAsync(async (req, res) => {
     );
   }
 
-  await changeUserPassword(req.user.id, currentPassword, newPassword);
+  await userService.changeUserPassword(
+    req.user.id,
+    currentPassword,
+    newPassword
+  );
   res.status(httpStatus.OK).send({ message: "Password berhasil diubah." });
 });
 
