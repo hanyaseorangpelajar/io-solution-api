@@ -1,5 +1,6 @@
 const httpStatus = require("http-status");
-const { KBEntry, KBTag } = require("../models");
+const { KBEntry } = require("../models/kbEntry.model");
+const { KBTag } = require("../models/kbTag.model");
 const { ApiError } = require("../utils");
 
 /**
