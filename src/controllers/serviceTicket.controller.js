@@ -12,7 +12,7 @@ const createTicketController = catchAsync(async (req, res) => {
 });
 
 const getTicketsController = catchAsync(async (req, res) => {
-  const result = serviceTicketService.getServiceTickets(req.query);
+  const result = await serviceTicketService.getServiceTickets(req.query);
   res.send(result);
 });
 

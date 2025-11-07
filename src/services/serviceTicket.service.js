@@ -1,5 +1,4 @@
 const httpStatus = require("http-status");
-// MENJADI INI:
 const {
   ServiceTicket,
   TICKET_STATUSES,
