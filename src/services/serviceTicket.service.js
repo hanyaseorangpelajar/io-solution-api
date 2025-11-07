@@ -154,11 +154,7 @@ const assignServiceTicket = async (ticketId, teknisiId, adminId) => {
  * Memperbarui status tiket (oleh Teknisi).
  * Ini adalah fungsi inti untuk mencatat progres.
  */
-const updateServiceTicketStatus = async (
-  ticketId,
-  statusUpdateBody,
-  userId
-) => {
+const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   const { status, catatan } = statusUpdateBody;
   if (!status || !TICKET_STATUSES.includes(status)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Status baru tidak valid.");

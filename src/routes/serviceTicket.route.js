@@ -26,7 +26,7 @@ router
 
 router.patch(
   "/:id/status",
-  authorize(["Admin", "Teknisi"]),
+  authorize(["Teknisi"]),
   serviceTicketController.updateStatusController
 );
 
@@ -38,7 +38,7 @@ router.post(
 
 router.post(
   "/:id/complete",
-  authorize(["Admin", "Teknisi"]),
+  authorize(["Admin"]),
   serviceTicketController.completeTicketController
 );
 

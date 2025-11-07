@@ -39,7 +39,7 @@ const updateStatusController = catchAsync(async (req, res) => {
   const updatedTicket = await serviceTicketService.updateServiceTicketStatus(
     req.params.id,
     { status, catatan },
-    req.user.id
+    req.user
   );
   res.send(updatedTicket);
 });
