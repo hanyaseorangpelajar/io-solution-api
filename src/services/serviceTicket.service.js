@@ -161,6 +161,22 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   }
 
   const ticket = await getServiceTicketById(ticketId);
+  // ++ VALIDASI PENGGUNA ++
+  if (user.role !== "Teknisi") {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "Hanya Teknisi yang dapat mengubah status progres."
+    );
+  } // Pastikan teknisiId ada dan bandingkan sebagai string
+  const isAssignedTeknisi =
+    ticket.teknisiId && ticket.teknisiId.id.toString() === user.id.toString();
+
+  if (!isAssignedTeknisi) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "Anda bukan teknisi yang ditugaskan untuk tiket ini."
+    );
+  }
 
   if (ticket.status === "Selesai" || ticket.status === "Dibatalkan") {
     throw new ApiError(
@@ -193,7 +209,7 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   ticket.status = status;
   ticket.statusHistory.push({
     statusBaru: status,
-    catatan: catatan || `Status diubah oleh Teknisi (ID: ${userId}).`,
+    catatan: catatan || `Status diubah oleh ${user.nama} (ID: ${user.id}).`,
   });
 
   if (status === "Selesai" || status === "Dibatalkan") {
