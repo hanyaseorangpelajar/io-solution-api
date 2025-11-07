@@ -165,23 +165,29 @@ const updateServiceTicketStatus = async (
   }
 
   const ticket = await getServiceTicketById(ticketId);
+
   if (ticket.status === "Selesai" || ticket.status === "Dibatalkan") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       "Tiket sudah final (Selesai/Dibatalkan) dan tidak bisa diubah."
     );
-    const allowed = {
-      Diagnosis: ["DalamProses", "Dibatalkan"],
-      DalamProses: ["MenungguSparepart", "Selesai", "Dibatalkan"],
-      MenungguSparepart: ["DalamProses", "Selesai", "Dibatalkan"],
-    };
-    const nexts = allowed[ticket.status] || [];
-    if (!nexts.includes(status)) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `Transisi dari '${ticket.status}' ke '${status}' tidak diperbolehkan.`
-      );
-    }
+  }
+
+  if (ticket.status === status) {
+    return ticket;
+  }
+
+  const allowed = {
+    Diagnosis: ["DalamProses", "Dibatalkan", "Selesai", "MenungguSparepart"],
+    DalamProses: ["MenungguSparepart", "Selesai", "Dibatalkan"],
+    MenungguSparepart: ["DalamProses", "Selesai", "Dibatalkan"],
+  };
+  const nexts = allowed[ticket.status] || [];
+  if (!nexts.includes(status)) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Transisi dari '${ticket.status}' ke '${status}' tidak diperbolehkan.`
+    );
   }
 
   if (ticket.status === status) {

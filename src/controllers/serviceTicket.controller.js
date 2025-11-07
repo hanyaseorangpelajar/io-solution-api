@@ -36,12 +36,12 @@ const assignTicketController = catchAsync(async (req, res) => {
 
 const updateStatusController = catchAsync(async (req, res) => {
   const { status, catatan } = req.body;
-  const ticket = serviceTicketService.updateServiceTicketStatus(
+  const updatedTicket = await serviceTicketService.updateServiceTicketStatus(
     req.params.id,
     { status, catatan },
     req.user.id
   );
-  res.send(ticket);
+  res.send(updatedTicket);
 });
 
 const addItemController = catchAsync(async (req, res) => {
