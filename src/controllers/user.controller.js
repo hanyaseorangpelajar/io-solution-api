@@ -1,8 +1,7 @@
 const httpStatus = require("http-status");
 const { userService } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
-const { ROLES } = require("../models");
-
+const { ROLES } = require("../models/user.model");
 const createUserController = catchAsync(async (req, res) => {
   const userBody = {
     nama: req.body.fullName || req.body.name || req.body.nama,

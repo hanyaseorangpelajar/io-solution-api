@@ -71,6 +71,21 @@ UserSchema.statics.findByUsernameWithPassword = function (username) {
 };
 
 /**
+ * Cek apakah username sudah terdaftar (untuk validasi)
+ * @param {string} username - Username yang akan dicek
+ * @param {string} [excludeUserId] - (Opsional) ID user yang dikecualikan dari pencarian
+ * @returns {Promise<boolean>} - true jika username sudah diambil, false jika belum
+ */
+UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
+  const query = { username: username.toLowerCase() };
+  if (excludeUserId) {
+    query._id = { $ne: excludeUserId };
+  }
+  const user = await this.findOne(query);
+  return !!user;
+};
+
+/**
  * Pre-save hook untuk hash password
  */
 UserSchema.pre("save", async function (next) {
