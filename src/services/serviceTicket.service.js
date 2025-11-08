@@ -10,6 +10,12 @@ const { User } = require("../models/user.model");
 const { ApiError } = require("../utils");
 const { KBTag } = require("../models/kbTag.model");
 
+/**
+ * Membuat tiket servis baru (alur kerja ternormalisasi).
+ * @param {Object} ticketBody - Data dari controller
+ * @param {string} createdById - ID User yang membuat (Teknisi/Admin)
+ * @returns {Promise<ServiceTicket>}
+ */
 const createServiceTicket = async (ticketBody, createdById) => {
   const { customer, device, keluhanAwal, priority, assignee } = ticketBody;
   if (!customer || !customer.nama || !customer.noHp) {
@@ -71,6 +77,9 @@ const createServiceTicket = async (ticketBody, createdById) => {
   ]);
 };
 
+/**
+ * Mengambil daftar semua tiket servis.
+ */
 const getServiceTickets = async (filter) => {
   const safe = {};
   if (filter?.status) safe.status = filter.status;
@@ -99,6 +108,9 @@ const getServiceTickets = async (filter) => {
   return { results: tickets, totalResults, page, limit };
 };
 
+/**
+ * Mengambil satu tiket servis berdasarkan ID.
+ */
 const getServiceTicketById = async (ticketId) => {
   const ticket = await ServiceTicket.findById(ticketId)
     .populate("customerId")
@@ -111,6 +123,9 @@ const getServiceTicketById = async (ticketId) => {
   return ticket;
 };
 
+/**
+ * Menugaskan tiket ke seorang teknisi.
+ */
 const assignServiceTicket = async (ticketId, teknisiId, adminId) => {
   const ticket = await getServiceTicketById(ticketId);
   const teknisi = await User.findById(teknisiId);
@@ -138,7 +153,7 @@ const assignServiceTicket = async (ticketId, teknisiId, adminId) => {
 };
 
 /**
- * Memperbarui status tiket (oleh Teknisi).
+ * Memperbarui status tiket (HANYA status progres, bukan Selesai).
  */
 const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   const { status, catatan } = statusUpdateBody;
@@ -146,10 +161,10 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Status baru tidak valid.");
   }
 
-  if (status === "Diarsipkan") {
+  if (status === "Diarsipkan" || status === "Selesai") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Status 'Diarsipkan' hanya bisa diatur melalui proses Review Admin."
+      `Gunakan endpoint 'complete' untuk menyelesaikan atau 'review' untuk mengarsipkan.`
     );
   }
 
@@ -186,9 +201,9 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   }
 
   const allowed = {
-    Diagnosis: ["DalamProses", "Dibatalkan", "Selesai", "MenungguSparepart"],
-    DalamProses: ["MenungguSparepart", "Selesai", "Dibatalkan"],
-    MenungguSparepart: ["DalamProses", "Selesai", "Dibatalkan"],
+    Diagnosis: ["DalamProses", "Dibatalkan", "MenungguSparepart"],
+    DalamProses: ["MenungguSparepart", "Dibatalkan"],
+    MenungguSparepart: ["DalamProses", "Dibatalkan"],
   };
 
   const nexts = allowed[ticket.status] || [];
@@ -199,17 +214,13 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
     );
   }
 
-  if (ticket.status === status) {
-    return ticket;
-  }
-
   ticket.status = status;
   ticket.statusHistory.push({
     statusBaru: status,
     catatan: catatan || `Status diubah oleh ${user.nama} (ID: ${user.id}).`,
   });
 
-  if (status === "Selesai" || status === "Dibatalkan") {
+  if (status === "Dibatalkan") {
     ticket.tanggalSelesai = new Date();
   }
 
@@ -217,6 +228,64 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   return ticket;
 };
 
+/**
+ * Menyelesaikan tiket (oleh Teknisi).
+ * Menyimpan diagnosis dan solusi draft, mengubah status ke 'Selesai'.
+ */
+const completeByTeknisi = async (ticketId, completionBody, user) => {
+  const { diagnosis, solusi } = completionBody;
+  if (!diagnosis || !solusi) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Diagnosis dan Solusi wajib diisi."
+    );
+  }
+
+  const ticket = await getServiceTicketById(ticketId);
+
+  if (user.role !== "Teknisi") {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "Hanya Teknisi yang dapat menyelesaikan tiket."
+    );
+  }
+  const isAssignedTeknisi =
+    ticket.teknisiId && ticket.teknisiId.id.toString() === user.id.toString();
+  if (!isAssignedTeknisi) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "Anda bukan teknisi yang ditugaskan untuk tiket ini."
+    );
+  }
+
+  if (
+    ticket.status === "Selesai" ||
+    ticket.status === "Dibatalkan" ||
+    ticket.status === "Diarsipkan"
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Tiket ini sudah dalam status final."
+    );
+  }
+
+  ticket.diagnosisTeknisi = diagnosis;
+  ticket.solusiTeknisi = solusi;
+  ticket.status = "Selesai";
+  ticket.tanggalSelesai = new Date();
+
+  ticket.statusHistory.push({
+    statusBaru: "Selesai",
+    catatan: `Diselesaikan oleh Teknisi (${user.nama}). Menunggu review Admin.`,
+  });
+
+  await ticket.save();
+  return ticket;
+};
+
+/**
+ * Menambah item/komponen pengganti ke tiket.
+ */
 const addReplacementItem = async (ticketId, itemBody) => {
   const { namaKomponen, qty, keterangan } = itemBody;
   if (!namaKomponen || !qty || qty < 1) {
@@ -248,6 +317,11 @@ const addReplacementItem = async (ticketId, itemBody) => {
   return ticket;
 };
 
+/**
+ * Mencari tag yang ada atau membuat baru, lalu mengembalikan ID-nya.
+ * @param {string[]} tagNames - Array nama tag
+ * @returns {Promise<mongoose.Types.ObjectId[]>} Array ID Tag
+ */
 const findOrCreateTags = async (tagNames) => {
   if (!Array.isArray(tagNames) || tagNames.length === 0) {
     return [];
@@ -280,8 +354,7 @@ const findOrCreateTags = async (tagNames) => {
 };
 
 /**
- * Menyelesaikan tiket DAN membuat Knowledge Base Entry. (Sekarang "Review")
- * Ini adalah 'Use Case 6' dari skripsi Anda.
+ * Me-review dan mengarsipkan tiket (oleh Admin) DAN membuat KB Entry.
  */
 const completeTicketAndCreateKB = async (ticketId, kbBody, userId) => {
   const { diagnosis, solusi, tags } = kbBody;
@@ -289,23 +362,20 @@ const completeTicketAndCreateKB = async (ticketId, kbBody, userId) => {
   if (!diagnosis || !solusi) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Diagnosis dan Solusi wajib diisi untuk membuat Knowledge Base."
+      "Diagnosis dan Solusi (yang sudah di-review) wajib diisi."
     );
   }
 
   const ticket = await getServiceTicketById(ticketId);
 
   if (ticket.status === "Diarsipkan") {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Tiket ini sudah diarsipkan dan dibuatkan Knowledge Base Entry."
-    );
+    throw new ApiError(httpStatus.BAD_REQUEST, "Tiket ini sudah diarsipkan.");
   }
 
   if (ticket.status !== "Selesai" && ticket.status !== "Dibatalkan") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Hanya tiket yang berstatus 'Selesai' atau 'Dibatalkan' yang bisa di-review dan diarsipkan."
+      "Hanya tiket yang berstatus 'Selesai' atau 'Dibatalkan' yang bisa di-review."
     );
   }
 
@@ -333,11 +403,87 @@ const completeTicketAndCreateKB = async (ticketId, kbBody, userId) => {
 
   ticket.statusHistory.push({
     statusBaru: "Diarsipkan",
-    catatan: `Tiket di-review & diarsipkan. Knowledge Base (ID: ${kbEntry._id}) dibuat oleh (ID: ${userId}).`,
+    catatan: `Tiket di-review & diarsipkan. KB (ID: ${kbEntry._id}) dibuat oleh Admin (ID: ${userId}).`,
   });
 
   await ticket.save();
   return { ticket, kbEntry };
+};
+
+/**
+ * Mengambil riwayat status global (log tiket).
+ * @param {object} filter - Filter query (q, from, to)
+ * @param {User} user - Pengguna yang terotentikasi
+ */
+const getGlobalStatusHistory = async (filter, user) => {
+  const { q, from, to } = filter;
+  const pipeline = [];
+
+  const matchStage = {};
+  if (user.role === "Teknisi") {
+    matchStage.teknisiId = user._id;
+  }
+  if (Object.keys(matchStage).length > 0) {
+    pipeline.push({ $match: matchStage });
+  }
+
+  pipeline.push({ $unwind: "$statusHistory" });
+
+  const dateFilter = {};
+  if (from) dateFilter.$gte = new Date(from);
+  if (to) dateFilter.$lte = new Date(to);
+  if (Object.keys(dateFilter).length > 0) {
+    pipeline.push({ $match: { "statusHistory.waktu": dateFilter } });
+  }
+
+  pipeline.push({
+    $lookup: {
+      from: "users",
+      localField: "teknisiId",
+      foreignField: "_id",
+      as: "teknisiInfo",
+    },
+  });
+
+  if (q) {
+    const searchQuery = { $regex: q, $options: "i" };
+    pipeline.push({
+      $match: {
+        $or: [
+          { nomorTiket: searchQuery },
+          { "statusHistory.catatan": searchQuery },
+          { "statusHistory.statusBaru": searchQuery },
+          { "teknisiInfo.nama": searchQuery },
+        ],
+      },
+    });
+  }
+
+  pipeline.push({ $sort: { "statusHistory.waktu": -1 } });
+
+  pipeline.push({ $limit: 200 });
+
+  pipeline.push({
+    $project: {
+      _id: "$statusHistory._id",
+      at: "$statusHistory.waktu",
+      note: "$statusHistory.catatan",
+      newStatus: "$statusHistory.statusBaru",
+      ticketCode: "$nomorTiket",
+      ticketId: "$_id",
+      teknisiName: { $arrayElemAt: ["$teknisiInfo.nama", 0] },
+    },
+  });
+
+  const historyLogs = await ServiceTicket.aggregate(pipeline);
+
+  return {
+    results: historyLogs,
+    page: 1,
+    limit: historyLogs.length,
+    totalResults: historyLogs.length,
+    totalPages: 1,
+  };
 };
 
 module.exports = {
@@ -346,6 +492,8 @@ module.exports = {
   getServiceTicketById,
   assignServiceTicket,
   updateServiceTicketStatus,
+  completeByTeknisi,
   addReplacementItem,
   completeTicketAndCreateKB,
+  getGlobalStatusHistory,
 };

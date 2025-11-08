@@ -14,7 +14,14 @@ const createTicketController = catchAsync(async (req, res) => {
 });
 
 const getTicketsController = catchAsync(async (req, res) => {
-  const result = await serviceTicketService.getServiceTickets(req.query);
+  const filter = { ...req.query };
+  const { user } = req;
+
+  if (user.role === "Teknisi") {
+    filter.teknisiId = user.id;
+  }
+
+  const result = await serviceTicketService.getServiceTickets(filter);
   res.send(result);
 });
 
@@ -54,6 +61,16 @@ const addItemController = catchAsync(async (req, res) => {
   res.send(ticket);
 });
 
+const completeByTeknisiController = catchAsync(async (req, res) => {
+  const { diagnosis, solusi } = req.body;
+  const ticket = await serviceTicketService.completeByTeknisi(
+    req.params.id,
+    { diagnosis, solusi },
+    req.user
+  );
+  res.status(httpStatus.OK).send(ticket);
+});
+
 const completeTicketController = catchAsync(async (req, res) => {
   const { diagnosis, solusi, tags } = req.body;
   const result = await serviceTicketService.completeTicketAndCreateKB(
@@ -64,6 +81,14 @@ const completeTicketController = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(result);
 });
 
+const getGlobalHistoryController = catchAsync(async (req, res) => {
+  const result = await serviceTicketService.getGlobalStatusHistory(
+    req.query,
+    req.user
+  );
+  res.send(result);
+});
+
 module.exports = {
   createTicketController,
   getTicketsController,
@@ -71,5 +96,7 @@ module.exports = {
   assignTicketController,
   updateStatusController,
   addItemController,
+  completeByTeknisiController,
   completeTicketController,
+  getGlobalHistoryController,
 };

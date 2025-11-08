@@ -17,6 +17,12 @@ router
     serviceTicketController.getTicketsController
   );
 
+router.get(
+  "/history",
+  authorize(["Admin", "Teknisi"]),
+  serviceTicketController.getGlobalHistoryController
+);
+
 router
   .route("/:id")
   .get(
