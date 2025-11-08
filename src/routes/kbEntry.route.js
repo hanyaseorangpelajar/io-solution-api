@@ -12,12 +12,14 @@ router
 
 router
   .route("/:id")
-  .get(authorize(["Admin", "Teknisi"]), kbEntryController.getEntryController);
-
-router
-  .route("/:id")
   .get(authorize(["Admin", "Teknisi"]), kbEntryController.getEntryController)
-  .patch(authorize(["Admin"]), kbEntryController.updateEntryController)
-  .delete(authorize(["Admin"]), kbEntryController.deleteEntryController);
+  .patch(
+    authorize(["Admin", "Teknisi"]),
+    kbEntryController.updateEntryController
+  )
+  .delete(
+    authorize(["Admin", "Teknisi"]),
+    kbEntryController.deleteEntryController
+  );
 
 module.exports = router;
