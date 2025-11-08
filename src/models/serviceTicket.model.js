@@ -9,6 +9,8 @@ const TICKET_STATUSES = [
   "Dibatalkan",
 ];
 
+const TICKET_PRIORITIES = ["low", "medium", "high", "urgent"];
+
 const StatusHistorySchema = new Schema(
   {
     waktu: {
@@ -79,6 +81,15 @@ const serviceTicketSchema = new Schema(
       type: String,
       required: [true, "Keluhan awal wajib diisi"],
       trim: true,
+    },
+    priority: {
+      type: String,
+      enum: {
+        values: TICKET_PRIORITIES,
+        message: "Prioritas tidak valid ({VALUE})",
+      },
+      default: "medium",
+      index: true,
     },
     status: {
       type: String,
@@ -154,4 +165,4 @@ serviceTicketSchema.pre("save", async function (next) {
 
 const ServiceTicket = mongoose.model("ServiceTicket", serviceTicketSchema);
 
-module.exports = { ServiceTicket, TICKET_STATUSES };
+module.exports = { ServiceTicket, TICKET_STATUSES, TICKET_PRIORITIES };

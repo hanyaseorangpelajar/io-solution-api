@@ -16,8 +16,7 @@ const { ApiError } = require("../utils");
  * @returns {Promise<ServiceTicket>}
  */
 const createServiceTicket = async (ticketBody, createdById) => {
-  const { customer, device, keluhanAwal } = ticketBody;
-
+  const { customer, device, keluhanAwal, priority } = ticketBody;
   if (!customer || !customer.nama || !customer.noHp) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -67,6 +66,7 @@ const createServiceTicket = async (ticketBody, createdById) => {
     keluhanAwal,
     status: "Diagnosis",
     tanggalMasuk: new Date(),
+    priority: priority || "medium",
   });
 
   return serviceTicket.populate([

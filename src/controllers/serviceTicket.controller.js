@@ -4,10 +4,12 @@ const { catchAsync, ApiError } = require("../utils");
 
 const createTicketController = catchAsync(async (req, res) => {
   const createdById = req.user.id;
-  const ticket = serviceTicketService.createServiceTicket(
+
+  const ticket = await serviceTicketService.createServiceTicket(
     req.body,
     createdById
   );
+
   res.status(httpStatus.CREATED).send(ticket);
 });
 
@@ -17,7 +19,7 @@ const getTicketsController = catchAsync(async (req, res) => {
 });
 
 const getTicketController = catchAsync(async (req, res) => {
-  const ticket = serviceTicketService.getServiceTicketById(req.params.id);
+  const ticket = await serviceTicketService.getServiceTicketById(req.params.id);
   res.send(ticket);
 });
 
@@ -26,7 +28,7 @@ const assignTicketController = catchAsync(async (req, res) => {
   if (!teknisiId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "teknisiId wajib diisi.");
   }
-  const ticket = serviceTicketService.assignServiceTicket(
+  const ticket = await serviceTicketService.assignServiceTicket(
     req.params.id,
     teknisiId,
     req.user.id
@@ -45,7 +47,7 @@ const updateStatusController = catchAsync(async (req, res) => {
 });
 
 const addItemController = catchAsync(async (req, res) => {
-  const ticket = serviceTicketService.addReplacementItem(
+  const ticket = await serviceTicketService.addReplacementItem(
     req.params.id,
     req.body
   );
@@ -54,7 +56,7 @@ const addItemController = catchAsync(async (req, res) => {
 
 const completeTicketController = catchAsync(async (req, res) => {
   const { diagnosis, solusi } = req.body;
-  const result = serviceTicketService.completeTicketAndCreateKB(
+  const result = await serviceTicketService.completeTicketAndCreateKB(
     req.params.id,
     { diagnosis, solusi },
     req.user.id
