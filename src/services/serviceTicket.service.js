@@ -16,7 +16,7 @@ const { ApiError } = require("../utils");
  * @returns {Promise<ServiceTicket>}
  */
 const createServiceTicket = async (ticketBody, createdById) => {
-  const { customer, device, keluhanAwal, priority } = ticketBody;
+  const { customer, device, keluhanAwal, priority, assignee } = ticketBody;
   if (!customer || !customer.nama || !customer.noHp) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -67,6 +67,7 @@ const createServiceTicket = async (ticketBody, createdById) => {
     status: "Diagnosis",
     tanggalMasuk: new Date(),
     priority: priority || "medium",
+    teknisiId: assignee || null,
   });
 
   return serviceTicket.populate([
@@ -161,13 +162,12 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   }
 
   const ticket = await getServiceTicketById(ticketId);
-  // ++ VALIDASI PENGGUNA ++
   if (user.role !== "Teknisi") {
     throw new ApiError(
       httpStatus.FORBIDDEN,
       "Hanya Teknisi yang dapat mengubah status progres."
     );
-  } // Pastikan teknisiId ada dan bandingkan sebagai string
+  }
   const isAssignedTeknisi =
     ticket.teknisiId && ticket.teknisiId.id.toString() === user.id.toString();
 
