@@ -55,10 +55,10 @@ const addItemController = catchAsync(async (req, res) => {
 });
 
 const completeTicketController = catchAsync(async (req, res) => {
-  const { diagnosis, solusi } = req.body;
+  const { diagnosis, solusi, tags } = req.body;
   const result = await serviceTicketService.completeTicketAndCreateKB(
     req.params.id,
-    { diagnosis, solusi },
+    { diagnosis, solusi, tags },
     req.user.id
   );
   res.status(httpStatus.OK).send(result);

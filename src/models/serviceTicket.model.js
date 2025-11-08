@@ -7,6 +7,7 @@ const TICKET_STATUSES = [
   "MenungguSparepart",
   "Selesai",
   "Dibatalkan",
+  "Diarsipkan",
 ];
 
 const TICKET_PRIORITIES = ["low", "medium", "high", "urgent"];
