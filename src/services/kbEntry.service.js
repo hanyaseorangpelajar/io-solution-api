@@ -75,7 +75,7 @@ const getKBEntries = async (filter) => {
 
   const entries = await KBEntry.find(query)
     .populate("dibuatOleh", "nama")
-    .populate("sourceTicketId", "nomorTiket teknisiId")
+    .populate("sourceTicketId", "_id nomorTiket teknisiId")
     .populate("tags", "nama")
     .sort({ dibuatPada: -1 });
 
