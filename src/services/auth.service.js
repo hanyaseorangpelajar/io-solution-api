@@ -38,16 +38,26 @@ const register = async (userBody) => {
  * Login pengguna
  * @param {string} username - Hanya username
  * @param {string} password
+ * @param {object} req - Objek request Express
  * @returns {Promise<{user: object, token: string}>}
  */
-const login = async (username, password) => {
+const login = async (username, password, req) => {
   const uname = (username || "").toLowerCase();
+
+  const ip = req.ip;
+  const userAgent = req.headers["user-agent"];
+
   const user = await User.findOne({ username: uname }).select(
     "+passwordHash +statusAktif"
   );
 
   if (!user || !(await user.comparePassword(password))) {
-    await LoginAttempt.create({ usernameAttempt: uname, success: false });
+    await LoginAttempt.create({
+      usernameAttempt: uname,
+      success: false,
+      ip: ip,
+      userAgent: userAgent,
+    });
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
       "Username atau password salah."
@@ -64,6 +74,8 @@ const login = async (username, password) => {
     user: user.id,
     usernameAttempt: uname,
     success: true,
+    ip: ip,
+    userAgent: userAgent,
   });
 
   return { user, token };

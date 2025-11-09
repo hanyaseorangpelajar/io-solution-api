@@ -7,7 +7,7 @@ const { Customer } = require("../models/customer.model");
 const { Device } = require("../models/device.model");
 const { KBEntry } = require("../models/kbEntry.model");
 const { User } = require("../models/user.model");
-const { ApiError } = require("../utils");
+const { ApiError, parsePagination } = require("../utils");
 const { KBTag } = require("../models/kbTag.model");
 
 /**
@@ -91,9 +91,8 @@ const getServiceTickets = async (filter) => {
       { keluhanAwal: { $regex: filter.q, $options: "i" } },
     ];
   }
-  const page = Math.max(1, parseInt(filter?.page ?? 1, 10));
-  const limit = Math.min(100, Math.max(1, parseInt(filter?.limit ?? 20, 10)));
-  const skip = (page - 1) * limit;
+
+  const { page, limit, skip } = parsePagination(filter, 20);
 
   const [tickets, totalResults] = await Promise.all([
     ServiceTicket.find(safe)
@@ -106,7 +105,9 @@ const getServiceTickets = async (filter) => {
       .limit(limit),
     ServiceTicket.countDocuments(safe),
   ]);
-  return { results: tickets, totalResults, page, limit };
+
+  const totalPages = Math.ceil(totalResults / limit) || 1;
+  return { results: tickets, totalResults, page, limit, totalPages };
 };
 
 /**
@@ -418,7 +419,9 @@ const completeTicketAndCreateKB = async (ticketId, kbBody, userId) => {
  * @param {User} user - Pengguna yang terotentikasi
  */
 const getGlobalStatusHistory = async (filter, user) => {
+  const { page, limit, skip } = parsePagination(filter, 20);
   const { q, from, to } = filter;
+
   const pipeline = [];
 
   const matchStage = {};
@@ -461,30 +464,40 @@ const getGlobalStatusHistory = async (filter, user) => {
     });
   }
 
-  pipeline.push({ $sort: { "statusHistory.waktu": -1 } });
-
-  pipeline.push({ $limit: 200 });
-
   pipeline.push({
-    $project: {
-      _id: "$statusHistory._id",
-      at: "$statusHistory.waktu",
-      note: "$statusHistory.catatan",
-      newStatus: "$statusHistory.statusBaru",
-      ticketCode: "$nomorTiket",
-      ticketId: "$_id",
-      teknisiName: { $arrayElemAt: ["$teknisiInfo.nama", 0] },
+    $facet: {
+      metadata: [{ $count: "totalResults" }],
+      data: [
+        { $sort: { "statusHistory.waktu": -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $project: {
+            _id: "$statusHistory._id",
+            at: "$statusHistory.waktu",
+            note: "$statusHistory.catatan",
+            newStatus: "$statusHistory.statusBaru",
+            ticketCode: "$nomorTiket",
+            ticketId: "$_id",
+            teknisiName: { $arrayElemAt: ["$teknisiInfo.nama", 0] },
+          },
+        },
+      ],
     },
   });
 
-  const historyLogs = await ServiceTicket.aggregate(pipeline);
+  const aggregationResult = await ServiceTicket.aggregate(pipeline);
+
+  const results = aggregationResult[0]?.data || [];
+  const totalResults = aggregationResult[0]?.metadata[0]?.totalResults || 0;
+  const totalPages = Math.ceil(totalResults / limit) || 1;
 
   return {
-    results: historyLogs,
-    page: 1,
-    limit: historyLogs.length,
-    totalResults: historyLogs.length,
-    totalPages: 1,
+    results,
+    page,
+    limit,
+    totalResults,
+    totalPages,
   };
 };
 

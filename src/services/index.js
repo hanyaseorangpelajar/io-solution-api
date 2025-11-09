@@ -3,6 +3,7 @@ const kbEntryService = require("./kbEntry.service");
 const tokenService = require("./token.service");
 const userService = require("./user.service");
 const serviceTicketService = require("./serviceTicket.service");
+const customerService = require("./customer.service");
 
 module.exports = {
   authService,
@@ -10,4 +11,5 @@ module.exports = {
   kbEntryService,
   serviceTicketService,
   userService,
+  customerService,
 };

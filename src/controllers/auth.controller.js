@@ -35,7 +35,8 @@ const loginController = catchAsync(async (req, res) => {
     );
   }
 
-  const { user, token } = await authService.login(username, password);
+  const { user, token } = await authService.login(username, password, req);
+
   res.status(httpStatus.OK).json({
     message: "Login berhasil",
     user,

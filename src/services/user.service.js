@@ -1,6 +1,12 @@
 const httpStatus = require("http-status");
 const { User, ROLES } = require("../models/user.model");
-const { ApiError } = require("../utils");
+
+// --- PERBAIKAN 1: Impor parsePagination dan ApiError dari utils ---
+const { ApiError, parsePagination } = require("../utils");
+// --- AKHIR PERBAIKAN 1 ---
+
+// Impor LoginAttempt
+const { LoginAttempt } = require("../models/loginAttempt.model");
 
 /**
  * Membuat pengguna baru (oleh Admin).
@@ -50,9 +56,9 @@ const getUsers = async (filter) => {
       { username: { $regex: filter.q, $options: "i" } },
     ];
   }
-  const page = Math.max(1, parseInt(filter?.page ?? 1, 10));
-  const limit = Math.min(100, Math.max(1, parseInt(filter?.limit ?? 20, 10)));
-  const skip = (page - 1) * limit;
+
+  // --- PERBAIKAN 2: Gunakan parsePagination di sini juga ---
+  const { page, limit, skip } = parsePagination(filter, 20); // Default 20 per halaman
 
   const [users, totalResults] = await Promise.all([
     User.find(safe).sort({ dibuatPada: -1 }).skip(skip).limit(limit),
@@ -163,6 +169,34 @@ const changeUserPassword = async (userId, currentPassword, newPassword) => {
   return user;
 };
 
+/**
+ * Mengambil riwayat login untuk pengguna tertentu.
+ */
+const getLoginHistoryByUserId = async (userId, query) => {
+  // Fungsi ini sekarang aman karena parsePagination sudah diimpor
+  const { page, limit, skip } = parsePagination(query, 10);
+  const queryFilter = { user: userId };
+
+  const [logs, totalResults] = await Promise.all([
+    LoginAttempt.find(queryFilter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    LoginAttempt.countDocuments(queryFilter),
+  ]);
+
+  const totalPages = Math.ceil(totalResults / limit) || 1;
+
+  return {
+    results: logs,
+    page,
+    limit,
+    totalResults,
+    totalPages,
+  };
+};
+
 module.exports = {
   createUser,
   getUsers,
@@ -171,4 +205,5 @@ module.exports = {
   deleteUserById,
   updateUserProfile,
   changeUserPassword,
+  getLoginHistoryByUserId,
 };

@@ -6,6 +6,7 @@ const kbEntryRoute = require("./kbEntry.route");
 const serviceTicketRoute = require("./serviceTicket.route");
 const testRoutes = require("./test.route");
 const userRoutes = require("./user.route");
+const customerRoutes = require("./customer.route");
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.use("/health", healthRoutes);
 router.use("/kb-entry", kbEntryRoute);
 router.use("/tickets", serviceTicketRoute);
 router.use("/users", userRoutes);
+router.use("/customers", customerRoutes);
 
 if (process.env.NODE_ENV !== "production") {
   router.use("/test", testRoutes);

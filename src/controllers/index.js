@@ -3,6 +3,7 @@ const kbEntryController = require("./kbEntry.controller");
 const logoutController = require("./logout.controller");
 const serviceTicketController = require("./serviceTicket.controller");
 const userController = require("./user.controller");
+const customerController = require("./customer.controller");
 
 module.exports = {
   authController,
@@ -10,4 +11,5 @@ module.exports = {
   serviceTicketController,
   userController,
   logoutController,
+  customerController,
 };

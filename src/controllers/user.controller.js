@@ -77,6 +77,14 @@ const changePasswordController = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send({ message: "Password berhasil diubah." });
 });
 
+const getLoginHistory = catchAsync(async (req, res) => {
+  const result = await userService.getLoginHistoryByUserId(
+    req.user.id,
+    req.query
+  );
+  res.send(result);
+});
+
 module.exports = {
   createUser: createUserController,
   getUsers: getUsersController,
@@ -85,4 +93,5 @@ module.exports = {
   deleteUser: deleteUserController,
   updateProfile: updateProfileController,
   changePassword: changePasswordController,
+  getLoginHistory: getLoginHistory,
 };

@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.patch("/me", protect, userController.updateProfile);
 router.patch("/me/password", protect, userController.changePassword);
+router.get("/me/login-history", protect, userController.getLoginHistory);
 router.use(protect);
 
 router.get(
