@@ -1,61 +1,47 @@
 /**
- * PENTING: File ini menggunakan @faker-js/faker
- * Pastikan Anda telah menginstalnya:
- * npm install @faker-js/faker --save-dev
- *
- * (Berdasarkan package.json Anda, ini seharusnya sudah ada)
+ * Seeder baru untuk I/O Solutions API (v3)
+ * Dibuat konsisten dengan model data Mongoose dan alur kerja teknisi/admin.
+ * Membuat:
+ * - 20 Users (2 Admin, 18 Teknisi)
+ * - 20 Customers
+ * - 20 Devices
+ * - 20 KBTags
+ * - 30 ServiceTickets (20 Selesai/Diarsipkan, 10 Diagnosis)
+ * - 20 KBEntries (dari 20 tiket yang Selesai)
+ * - 20 LoginAttempts
  */
-
-const genNomorTiket = (() => {
-  let seq = 1;
-  return () => {
-    const y = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
-    return `SRV-${y}-${String(seq++).padStart(4, "0")}`; // SRV-20251106-0001, dst.
-  };
-})();
 
 require("dotenv").config();
 const mongoose = require("mongoose");
-const { connectDB, disconnectDB } = require("./src/config/db"); //
+const { connectDB, disconnectDB } = require("./src/config/db");
+const { faker } = require("@faker-js/faker/locale/id_ID");
 
-// ================== PERBAIKAN DI SINI ==================
-// Kita gunakan impor 'faker' standar (EN) untuk memastikan semua method (seperti .internet) tersedia.
-const { faker } = require("@faker-js/faker");
-// ===================================================
+const { User } = require("./src/models/user.model");
+const { Customer } = require("./src/models/customer.model");
+const { Device } = require("./src/models/device.model");
+const { ServiceTicket } = require("./src/models/serviceTicket.model");
+const { KBTag } = require("./src/models/kbTag.model");
+const { KBEntry } = require("./src/models/kbEntry.model");
+const { LoginAttempt } = require("./src/models/loginAttempt.model");
 
-// Impor model yang file-nya kita miliki
-const { User, ROLES } = require("./src/models/user.model"); //
-const { Customer } = require("./src/models/customer.model"); //
-const { Device } = require("./src/models/device.model"); //
-const {
-  ServiceTicket,
-  TICKET_STATUSES,
-} = require("./src/models/serviceTicket.model"); //
-const { KBTag } = require("./src/models/kbTag.model"); //
-const { KBEntry } = require("./src/models/kbEntry.model"); //
-const { LoginAttempt } = require("./src/models/loginAttempt.model"); //
-
-// Fungsi helper untuk mengambil item acak dari array
 const pickRandom = (arr) => {
   if (!arr || arr.length === 0) return null;
   return arr[Math.floor(Math.random() * arr.length)];
 };
 
-// Fungsi helper untuk mengambil beberapa item acak unik
 const pickRandomMultiple = (arr, num) => {
   if (!arr || arr.length === 0) return [];
   const shuffled = [...arr].sort(() => 0.5 - Math.random());
-  return [...new Set(shuffled.slice(0, num))]; // Gunakan Set untuk jaminan unik
+  return [...new Set(shuffled.slice(0, num))];
 };
 
 const seedDatabase = async () => {
   try {
     console.log("Menyambungkan ke database...");
-    await connectDB(); //
+    await connectDB();
     console.log("Database tersambung.");
 
     console.log("Membersihkan data lama...");
-    // Hapus dalam urutan ketergantungan (dari yang paling dependen)
     await LoginAttempt.deleteMany({});
     await KBEntry.deleteMany({});
     await KBTag.deleteMany({});
@@ -65,312 +51,266 @@ const seedDatabase = async () => {
     await User.deleteMany({});
     console.log("Koleksi dibersihkan.");
 
-    // ===========================================
-    // 1. Seed Users (Total: 20)
-    // ===========================================
-    console.log("Seeding Users...");
+    const PASSWORD = "Password123!";
+    const KELUHAN_UMUM = [
+      "Laptop mati total, tidak ada respon.",
+      "Layar LCD bergaris dan kadang mati sendiri.",
+      "Blue screen (BSOD) saat booting Windows.",
+      "Keyboard menekan tombol sendiri / beberapa tombol tidak berfungsi.",
+      "Baterai sangat boros dan cepat panas.",
+      "Printer tidak bisa menarik kertas.",
+      "PC sering restart sendiri saat bermain game.",
+      "Tidak bisa terhubung ke WiFi.",
+      "Perlu install ulang Windows 11.",
+      "Engsel laptop patah.",
+    ];
+
+    console.log("Seeding Users (2 Admin, 18 Teknisi)...");
     const usersData = [];
-    // Tambahkan pengguna inti
-    // usersData.push({
-    //   nama: "Admin Utama",
-    //   username: "sysadmin",
-    //   passwordHash: "Password123!",
-    //   role: "SysAdmin",
-    //   statusAktif: true,
-    // });
+
     usersData.push({
-      nama: "Admin Toko",
-      username: "admin",
-      passwordHash: "Password123!",
+      nama: "Admin Utama",
+      username: "admin1",
+      passwordHash: PASSWORD,
       role: "Admin",
       statusAktif: true,
     });
-    // usersData.push({
-    //   nama: "Budi Teknisi",
-    //   username: "budi",
-    //   passwordHash: "Password123!",
-    //   role: "Teknisi",
-    //   statusAktif: true,
-    // });
-    // usersData.push({
-    //   nama: "Siti Teknisi",
-    //   username: "siti",
-    //   passwordHash: "Password123!",
-    //   role: "Teknisi",
-    //   statusAktif: true,
-    // });
+    usersData.push({
+      nama: "Admin Toko",
+      username: "admin2",
+      passwordHash: PASSWORD,
+      role: "Admin",
+      statusAktif: true,
+    });
 
-    // // Tambahkan 16 pengguna palsu
-    // for (let i = 0; i < 16; i++) {
-    //   const firstName = faker.person.firstName();
-    //   const lastName = faker.person.lastName();
-    //   usersData.push({
-    //     nama: `${firstName} ${lastName}`,
-    //     // Memanggil faker.internet.userName() (sekarang harusnya ada)
-    //     username: faker.internet.username().toLowerCase(),
-    //     passwordHash: "Password1all!",
-    //     role: pickRandom(["Admin", "Teknisi"]),
-    //     statusAktif: faker.datatype.boolean({ probability: 0.9 }),
-    //   });
-    // }
+    for (let i = 1; i <= 18; i++) {
+      const nama = faker.person.fullName();
+      usersData.push({
+        nama: nama,
+        username: `teknisi${i}`,
+        passwordHash: PASSWORD,
+        role: "Teknisi",
+        statusAktif: true,
+      });
+    }
 
     const createdUsers = await User.create(usersData);
-    console.log(` - Berhasil memasukkan ${createdUsers.length} users.`);
+    const adminUsers = createdUsers.filter((u) => u.role === "Admin");
     const teknisiUsers = createdUsers.filter((u) => u.role === "Teknisi");
-    const adminUsers = createdUsers.filter(
-      (u) => u.role === "Admin" || u.role === "SysAdmin"
+    console.log(` - Berhasil memasukkan ${createdUsers.length} users.`);
+
+    console.log("Seeding Customers...");
+    const customersData = [];
+    for (let i = 0; i < 20; i++) {
+      customersData.push({
+        nama: faker.person.fullName(),
+        noHp: faker.phone.number("08##########"),
+        alamat: faker.location.streetAddress(),
+      });
+    }
+    const createdCustomers = await Customer.create(customersData);
+    console.log(` - Berhasil memasukkan ${createdCustomers.length} customers.`);
+
+    console.log("Seeding Devices (1 per customer)...");
+    const devicesData = [];
+    const brands = ["Lenovo", "HP", "Dell", "Asus", "Acer", "Apple", "Epson"];
+    const types = ["Laptop", "PC Desktop", "Printer"];
+
+    for (const customer of createdCustomers) {
+      devicesData.push({
+        customerId: customer._id,
+        brand: pickRandom(brands),
+        model: faker.commerce.productName(),
+        serialNumber: faker.string.alphanumeric(12).toUpperCase(),
+        tipe: pickRandom(types),
+      });
+    }
+    const createdDevices = await Device.create(devicesData);
+    console.log(` - Berhasil memasukkan ${createdDevices.length} devices.`);
+
+    console.log("Seeding KBTags...");
+    const tagNames = [
+      "hardware",
+      "software",
+      "windows",
+      "driver",
+      "bluescreen",
+      "mati-total",
+      "ram",
+      "ssd",
+      "overheat",
+      "instalasi",
+      "virus",
+      "jaringan",
+      "printer",
+      "laptop",
+      "pc",
+      "vga",
+      "keyboard",
+      "lcd",
+      "baterai",
+      "maintenance",
+    ];
+    const tagsData = tagNames.map((nama) => ({ nama }));
+    const createdTags = await KBTag.create(tagsData);
+    console.log(` - Berhasil memasukkan ${createdTags.length} KB tags.`);
+
+    console.log("Seeding Service Tickets...");
+
+    console.log("   - Membuat 20 tiket 'Selesai'...");
+    const selesaiTicketsData = [];
+    for (let i = 0; i < 20; i++) {
+      const device = createdDevices[i];
+      const customer = createdCustomers[i];
+      const teknisi = pickRandom(teknisiUsers);
+      const keluhan = pickRandom(KELUHAN_UMUM) || "Kerusakan umum.";
+      const diagnosis = `Diagnosis: ${faker.lorem.sentence(5)}`;
+      const solusi = `Solusi: ${faker.lorem.paragraph(1)}`;
+
+      selesaiTicketsData.push({
+        customerId: customer._id,
+        deviceId: device._id,
+        teknisiId: teknisi._id,
+        keluhanAwal: keluhan,
+        priority: pickRandom(["low", "medium", "high", "urgent"]),
+        status: "Selesai",
+        tanggalMasuk: faker.date.past({ years: 1 }),
+        tanggalSelesai: faker.date.recent(),
+        diagnosisTeknisi: diagnosis,
+        solusiTeknisi: solusi,
+        statusHistory: [
+          { statusBaru: "Diagnosis", catatan: "Tiket dibuat oleh seeder." },
+          {
+            statusBaru: "DalamProses",
+            catatan: "Ditugaskan ke " + teknisi.nama,
+          },
+          { statusBaru: "Selesai", catatan: "Pekerjaan selesai oleh teknisi." },
+        ],
+        replacementItems: [
+          {
+            namaKomponen: faker.commerce.productName(),
+            qty: 1,
+            keterangan: "Penggantian komponen",
+          },
+        ],
+      });
+    }
+
+    const createdSelesaiTickets = [];
+    for (const ticketData of selesaiTicketsData) {
+      const newTicket = await ServiceTicket.create(ticketData);
+      createdSelesaiTickets.push(newTicket);
+    }
+    console.log(
+      ` - Berhasil memasukkan ${createdSelesaiTickets.length} tiket 'Selesai'.`
     );
 
-    // // ===========================================
-    // // 2. Seed Customers (Total: 30)
-    // // ===========================================
-    // console.log("Seeding Customers...");
-    // const customersData = [];
-    // for (let i = 0; i < 30; i++) {
-    //   customersData.push({
-    //     nama: faker.person.fullName(),
-    //     noHp: faker.phone.number("0812########"), // Format ini spesifik ID, tapi mungkin masih berfungsi
-    //     alamat: faker.location.streetAddress(),
-    //     catatan: faker.lorem.sentence(),
-    //   });
-    // }
-    // const createdCustomers = await Customer.insertMany(customersData);
-    // console.log(` - Berhasil memasukkan ${createdCustomers.length} customers.`);
+    console.log("   - Membuat 10 tiket 'Diagnosis'...");
+    const diagnosisTicketsData = [];
+    for (let i = 0; i < 10; i++) {
+      const device = pickRandom(createdDevices);
+      const customer = createdCustomers.find((c) =>
+        c._id.equals(device.customerId)
+      );
+      const teknisi = pickRandom(teknisiUsers);
+      const keluhan = pickRandom(KELUHAN_UMUM) || "Kerusakan baru.";
 
-    // // ===========================================
-    // // 3. Seed Devices (Total: 20+)
-    // // ===========================================
-    // console.log("Seeding Devices...");
-    // const devicesData = [];
-    // const deviceTypes = [
-    //   "Laptop",
-    //   "PC Desktop",
-    //   "Printer",
-    //   "Monitor",
-    //   "Router",
-    // ];
-    // const brands = ["Asus", "Lenovo", "HP", "Dell", "Acer", "Samsung", "Canon"];
+      diagnosisTicketsData.push({
+        customerId: customer._id,
+        deviceId: device._id,
+        teknisiId: Math.random() > 0.5 ? teknisi._id : null,
+        keluhanAwal: keluhan,
+        priority: pickRandom(["low", "medium", "high"]),
+        status: "Diagnosis",
+        tanggalMasuk: faker.date.recent({ days: 7 }),
+        tanggalSelesai: null,
+        diagnosisTeknisi: null,
+        solusiTeknisi: null,
+        statusHistory: [
+          {
+            statusBaru: "Diagnosis",
+            catatan: "Tiket baru dibuat oleh seeder.",
+          },
+        ],
+        replacementItems: [],
+      });
+    }
 
-    // // Buat 20 perangkat
-    // for (let i = 0; i < 20; i++) {
-    //   const tipe = pickRandom(deviceTypes);
-    //   devicesData.push({
-    //     customerId: pickRandom(createdCustomers)._id,
-    //     brand: pickRandom(brands),
-    //     model: `${faker.commerce.productName()}-${faker.string
-    //       .alphanumeric(4)
-    //       .toUpperCase()}`,
-    //     serialNumber: faker.string.alphanumeric(12).toUpperCase(),
-    //     tipe: tipe,
-    //     deskripsi: `Perangkat ${faker.commerce.productAdjective()}`,
-    //   });
-    // }
+    const createdDiagnosisTickets = [];
+    for (const ticketData of diagnosisTicketsData) {
+      const newTicket = await ServiceTicket.create(ticketData);
+      createdDiagnosisTickets.push(newTicket);
+    }
+    console.log(
+      ` - Berhasil memasukkan ${createdDiagnosisTickets.length} tiket 'Diagnosis'.`
+    );
 
-    // // Pastikan setiap customer punya setidaknya 1 perangkat
-    // for (const cust of createdCustomers) {
-    //   const hasDevice = devicesData.some((d) => d.customerId.equals(cust._id));
-    //   if (!hasDevice) {
-    //     const tipe = pickRandom(deviceTypes);
-    //     devicesData.push({
-    //       customerId: cust._id,
-    //       brand: pickRandom(brands),
-    //       model: `${faker.commerce.productName()}-${faker.string
-    //         .alphanumeric(4)
-    //         .toUpperCase()}`,
-    //       serialNumber: faker.string.alphanumeric(12).toUpperCase(),
-    //       tipe: tipe,
-    //       deskripsi: `Perangkat ${faker.commerce.productAdjective()}`,
-    //     });
-    //   }
-    // }
-    // const createdDevices = await Device.insertMany(devicesData);
-    // console.log(` - Berhasil memasukkan ${createdDevices.length} devices.`);
+    console.log("Seeding Knowledge Base Entries (dari 20 tiket 'Selesai')...");
+    const kbEntriesData = [];
+    for (const ticket of createdSelesaiTickets) {
+      const device = createdDevices.find((d) => d._id.equals(ticket.deviceId));
+      const modelPerangkat = device
+        ? `${device.brand} ${device.model}`
+        : "Model Tidak Dikenal";
 
-    // // ===========================================
-    // // 4. Seed KBTags (Total: 20)
-    // // ===========================================
-    // console.log("Seeding KBTags...");
-    // const tags = [
-    //   "hardware",
-    //   "software",
-    //   "windows",
-    //   "macos",
-    //   "linux",
-    //   "printer",
-    //   "jaringan",
-    //   "virus",
-    //   "overheat",
-    //   "bluescreen",
-    //   "mati-total",
-    //   "upgrade",
-    //   "instalasi",
-    //   "backup-data",
-    //   "laptop",
-    //   "pc-desktop",
-    //   "driver",
-    //   "lcd",
-    //   "keyboard",
-    //   "baterai",
-    // ];
-    // const tagsData = tags.map((nama) => ({ nama }));
-    // const createdTags = await KBTag.insertMany(tagsData);
-    // console.log(` - Berhasil memasukkan ${createdTags.length} KB tags.`);
+      kbEntriesData.push({
+        gejala: ticket.keluhanAwal,
+        modelPerangkat: modelPerangkat,
+        diagnosis: `(Review) ${ticket.diagnosisTeknisi}`,
+        solusi: `(Review) ${ticket.solusiTeknisi}`,
+        sourceTicketId: ticket._id,
+        dibuatOleh: pickRandom(adminUsers)._id,
+        tags: pickRandomMultiple(
+          createdTags,
+          faker.number.int({ min: 1, max: 3 })
+        ).map((t) => t._id),
+      });
+    }
+    await KBEntry.create(kbEntriesData);
 
-    // // ===========================================
-    // // 5. Seed ServiceTickets (Total: 30)
-    // // ===========================================
-    // console.log("Seeding Service Tickets...");
-    // const ticketsData = [];
-    // let SelesaiTicketsForKB = []; // Simpan tiket selesai untuk KB
+    const ticketIdsToArchive = createdSelesaiTickets.map((t) => t._id);
+    await ServiceTicket.updateMany(
+      { _id: { $in: ticketIdsToArchive } },
+      {
+        $set: { status: "Diarsipkan" },
+        $push: {
+          statusHistory: {
+            statusBaru: "Diarsipkan",
+            catatan: "Di-review dan diarsipkan oleh Admin Seeder.",
+          },
+        },
+      }
+    );
+    console.log(` - Berhasil memasukkan ${kbEntriesData.length} KB entries.`);
+    console.log(
+      ` - Berhasil mengupdate ${ticketIdsToArchive.length} tiket menjadi Diarsipkan.`
+    );
 
-    // for (let i = 0; i < 30; i++) {
-    //   const device = pickRandom(createdDevices);
-    //   const customerId = device.customerId;
-    //   const teknisi = pickRandom(teknisiUsers);
-    //   const status = pickRandom(TICKET_STATUSES);
+    console.log("Seeding Login Attempts...");
+    const loginAttemptsData = [];
+    for (let i = 0; i < 20; i++) {
+      const user = pickRandom(createdUsers);
+      const success = faker.datatype.boolean({ probability: 0.9 });
+      loginAttemptsData.push({
+        user: success ? user._id : null,
+        usernameAttempt: user.username,
+        ip: faker.internet.ip(),
+        userAgent: faker.internet.userAgent(),
+        success: success,
+      });
+    }
+    await LoginAttempt.create(loginAttemptsData);
+    console.log(
+      ` - Berhasil memasukkan ${loginAttemptsData.length} login attempts.`
+    );
 
-    //   const ticket = {
-    //     nomorTiket: genNomorTiket(),
-    //     customerId: customerId,
-    //     deviceId: device._id,
-    //     teknisiId: status !== "Diagnosis" ? teknisi?._id : null,
-    //     keluhanAwal: faker.lorem.sentence({ min: 5, max: 15 }),
-    //     status: status,
-    //     tanggalMasuk: faker.date.past({ years: 1 }),
-    //     tanggalSelesai:
-    //       status === "Selesai" || status === "Dibatalkan"
-    //         ? faker.date.recent()
-    //         : null,
-    //     statusHistory: [
-    //       {
-    //         statusBaru: "Diagnosis",
-    //         catatan: "Tiket dibuat oleh sistem.",
-    //         waktu: faker.date.past({ years: 1 }),
-    //       },
-    //     ],
-    //     replacementItems:
-    //       status === "Selesai"
-    //         ? [
-    //             {
-    //               namaKomponen: faker.commerce.productName(),
-    //               qty: 1,
-    //               keterangan: "Komponen pengganti",
-    //             },
-    //           ]
-    //         : [],
-    //   };
-
-    //   if (status !== "Diagnosis") {
-    //     ticket.statusHistory.push({
-    //       statusBaru: status,
-    //       catatan: `Status diubah ke ${status}`,
-    //       waktu: new Date(),
-    //     });
-    //   }
-
-    //   ticketsData.push(ticket);
-    // }
-    // const createdTickets = await ServiceTicket.insertMany(ticketsData);
-    // console.log(
-    //   ` - Berhasil memasukkan ${createdTickets.length} service tickets.`
-    // );
-
-    // // ===========================================
-    // // 6. Seed KBEntries (Total: 20)
-    // // ===========================================
-    // console.log("Seeding Knowledge Base Entries...");
-    // const kbEntriesData = [];
-    // // Ambil 20 tiket untuk dijadikan KB, prioritaskan yang selesai
-    // let ticketsForKB = createdTickets.filter((t) => t.status === "Selesai");
-    // if (ticketsForKB.length < 20) {
-    //   const otherTickets = createdTickets.filter((t) => t.status !== "Selesai");
-    //   ticketsForKB = [
-    //     ...ticketsForKB,
-    //     ...otherTickets.slice(0, 20 - ticketsForKB.length),
-    //   ];
-    // }
-
-    // // Pastikan kita punya 20 tiket
-    // if (ticketsForKB.length < 20) {
-    //   console.warn(
-    //     ` - Hanya ${ticketsForKB.length} tiket tersedia untuk dibuat KB.`
-    //   );
-    // }
-
-    // for (const ticket of ticketsForKB.slice(0, 20)) {
-    //   const device = createdDevices.find((d) => d._id.equals(ticket.deviceId));
-    //   const modelPerangkat = device
-    //     ? `${device.brand} ${device.model}`
-    //     : "Tidak diketahui";
-
-    //   kbEntriesData.push({
-    //     gejala: ticket.keluhanAwal,
-    //     modelPerangkat: modelPerangkat,
-    //     diagnosis: faker.lorem.sentence(5),
-    //     solusi: faker.lorem.paragraph(2),
-    //     sourceTicketId: ticket._id,
-    //     dibuatOleh: pickRandom(adminUsers)._id,
-    //     tags: pickRandomMultiple(
-    //       createdTags,
-    //       faker.number.int({ min: 1, max: 3 })
-    //     ).map((t) => t._id),
-    //   });
-    // }
-
-    // // Hapus duplikat sourceTicketId jika ada (meskipun seharusnya tidak)
-    // const uniqueKbEntries = Array.from(
-    //   new Map(
-    //     kbEntriesData.map((item) => [item.sourceTicketId.toString(), item])
-    //   ).values()
-    // );
-
-    // if (uniqueKbEntries.length > 0) {
-    //   const createdKbEntries = await KBEntry.insertMany(uniqueKbEntries);
-    //   console.log(
-    //     ` - Berhasil memasukkan ${createdKbEntries.length} KB entries.`
-    //   );
-    // } else {
-    //   console.log(` - Tidak ada tiket untuk dibuat KB, KBEntry dilewati.`);
-    // }
-
-    // // ===========================================
-    // // 7. Seed LoginAttempts (Total: 50)
-    // // ===========================================
-    // console.log("Seeding Login Attempts...");
-    // const loginAttemptsData = [];
-    // for (let i = 0; i < 50; i++) {
-    //   const success = faker.datatype.boolean({ probability: 0.7 }); // 70% berhasil
-    //   const user = pickRandom(createdUsers);
-    //   loginAttemptsData.push({
-    //     user: success ? user._id : null,
-    //     usernameAttempt: success
-    //       ? user.username
-    //       : pickRandom([
-    //           user.username,
-    //           faker.internet.username().toLowerCase(),
-    //         ]),
-    //     ip: faker.internet.ip(),
-    //     userAgent: faker.internet.userAgent(),
-    //     success: success,
-    //   });
-    // }
-    // const createdLoginAttempts = await LoginAttempt.insertMany(
-    //   loginAttemptsData
-    // );
-    // console.log(
-    //   ` - Berhasil memasukkan ${createdLoginAttempts.length} login attempts.`
-    // );
-
-    // ===========================================
-    // Selesai
-    // ===========================================
     console.log("✅ Database seeding selesai!");
   } catch (error) {
     console.error("❌ Terjadi error saat seeding database:", error);
     process.exitCode = 1;
   } finally {
     console.log("Menutup koneksi database...");
-    await disconnectDB(); //
+    await disconnectDB();
     console.log("Koneksi database ditutup.");
   }
 };

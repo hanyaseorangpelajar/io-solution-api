@@ -23,13 +23,6 @@ router.get(
   serviceTicketController.getGlobalHistoryController
 );
 
-router
-  .route("/:id")
-  .get(
-    authorize(["Admin", "Teknisi"]),
-    serviceTicketController.getTicketController
-  );
-
 router.patch(
   "/:id/status",
   authorize(["Teknisi"]),
@@ -43,6 +36,12 @@ router.post(
 );
 
 router.post(
+  "/:id/complete-teknisi",
+  authorize(["Teknisi"]),
+  serviceTicketController.completeByTeknisiController
+);
+
+router.post(
   "/:id/complete",
   authorize(["Admin"]),
   serviceTicketController.completeTicketController
@@ -53,5 +52,12 @@ router.patch(
   authorize(["Admin"]),
   serviceTicketController.assignTicketController
 );
+
+router
+  .route("/:id")
+  .get(
+    authorize(["Admin", "Teknisi"]),
+    serviceTicketController.getTicketController
+  );
 
 module.exports = router;

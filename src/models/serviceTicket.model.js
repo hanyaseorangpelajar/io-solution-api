@@ -110,6 +110,16 @@ const serviceTicketSchema = new Schema(
       type: Date,
       default: null,
     },
+    diagnosisTeknisi: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    solusiTeknisi: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     statusHistory: { type: [StatusHistorySchema], default: [] },
     replacementItems: { type: [ReplacementItemSchema], default: [] },
   },

@@ -97,6 +97,7 @@ const getServiceTickets = async (filter) => {
 
   const [tickets, totalResults] = await Promise.all([
     ServiceTicket.find(safe)
+      .select("+diagnosisTeknisi +solusiTeknisi")
       .populate("customerId", "nama noHp")
       .populate("deviceId", "brand model serialNumber")
       .populate("teknisiId", "nama")
@@ -113,6 +114,7 @@ const getServiceTickets = async (filter) => {
  */
 const getServiceTicketById = async (ticketId) => {
   const ticket = await ServiceTicket.findById(ticketId)
+    .select("+diagnosisTeknisi +solusiTeknisi")
     .populate("customerId")
     .populate("deviceId")
     .populate("teknisiId", "nama role");
