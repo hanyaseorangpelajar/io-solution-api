@@ -124,6 +124,10 @@ const updateKBEntry = async (kbId, updateBody, user) => {
   if (updateBody.diagnosis) entry.diagnosis = updateBody.diagnosis;
   if (updateBody.solusi) entry.solusi = updateBody.solusi;
 
+  if (typeof updateBody.imageUrl === "string" || updateBody.imageUrl === null) {
+    entry.imageUrl = updateBody.imageUrl;
+  }
+
   if (Array.isArray(updateBody.tags)) {
     const tagObjectIds = await findOrCreateTags(updateBody.tags);
     entry.tags = tagObjectIds;

@@ -25,6 +25,10 @@ const kbEntrySchema = new Schema(
       required: [true, "Solusi wajib diisi"],
       trim: true,
     },
+    imageUrl: {
+      type: String,
+      default: null,
+    },
     sourceTicketId: {
       type: Schema.Types.ObjectId,
       ref: "ServiceTicket",

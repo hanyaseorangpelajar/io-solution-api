@@ -18,6 +18,7 @@ app.use(cors({ origin: corsOrigin === "" ? "*" : corsOrigin }));
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => {

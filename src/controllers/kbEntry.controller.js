@@ -13,9 +13,18 @@ const getEntryController = catchAsync(async (req, res) => {
 });
 
 const updateEntryController = catchAsync(async (req, res) => {
+  const updateData = {
+    gejala: req.body.gejala,
+    modelPerangkat: req.body.modelPerangkat,
+    diagnosis: req.body.diagnosis,
+    solusi: req.body.solusi,
+    tags: req.body.tags,
+    imageUrl: req.body.imageUrl,
+  };
+
   const entry = await kbEntryService.updateKBEntry(
     req.params.id,
-    req.body,
+    updateData,
     req.user
   );
   res.send(entry);
