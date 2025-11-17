@@ -10,6 +10,8 @@ const kbEntryRouter = require("./routes/kbEntry.route");
 const userRouter = require("./routes/user.route");
 const uploadRouter = require("./routes/upload.route");
 const { notFound, errorHandler } = require("./middlewares");
+const serviceTicketRouter = require("./routes/serviceTicket.route");
+const costumerRouter = require("./routes/customer.route");
 
 const app = express();
 
@@ -28,8 +30,10 @@ app.get("/api/v1", (req, res) => {
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/kb-entry", kbEntryRouter);
-app.use("/api/v1/user", userRouter);
+app.use("/api/v1/users", userRouter);
 app.use("/api/v1/upload", uploadRouter);
+app.use("/api/v1/tickets", serviceTicketRouter);
+app.use("/api/v1/customers", costumerRouter);
 
 app.use(notFound);
 app.use(errorHandler);

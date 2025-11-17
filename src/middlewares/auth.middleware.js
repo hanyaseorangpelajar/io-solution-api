@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const ApiError = require("../utils/ApiError");
+const { ApiError } = require("../utils/ApiError");
 const { tokenService } = require("../services");
 const { User } = require("../models/user.model"); // <-- TAMBAHKAN IMPORT USER
 const httpStatus = require("http-status-codes");
