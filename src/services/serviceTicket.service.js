@@ -21,13 +21,13 @@ const createServiceTicket = async (ticketBody, createdById) => {
   if (!customer || !customer.nama || !customer.noHp) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Data 'customer' (nama dan noHp) wajib diisi."
+      "Data 'customer' (nama dan noHp) wajib diisi.",
     );
   }
   if (!device || !device.model) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Data 'device' (model) wajib diisi."
+      "Data 'device' (model) wajib diisi.",
     );
   }
   if (!keluhanAwal) {
@@ -37,7 +37,7 @@ const createServiceTicket = async (ticketBody, createdById) => {
   let customerDoc = await Customer.findOneAndUpdate(
     { noHp: customer.noHp },
     { $set: { nama: customer.nama, ...customer } },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
+    { new: true, upsert: true, setDefaultsOnInsert: true },
   );
 
   let deviceDoc;
@@ -82,13 +82,33 @@ const createServiceTicket = async (ticketBody, createdById) => {
  */
 const getServiceTickets = async (filter) => {
   const safe = {};
+
   if (filter?.status) safe.status = filter.status;
-  if (filter?.teknisiId) safe.teknisiId = filter.teknisiId;
   if (filter?.customerId) safe.customerId = filter.customerId;
+  if (filter?.priority) safe.priority = filter.priority;
+
+  if (filter?.teknisiId) {
+    safe.teknisiId =
+      filter.teknisiId === "unassigned" ? null : filter.teknisiId;
+  }
+
+  if (filter?.from || filter?.to) {
+    safe.tanggalMasuk = {};
+    if (filter.from) safe.tanggalMasuk.$gte = new Date(filter.from);
+    if (filter.to) safe.tanggalMasuk.$lte = new Date(filter.to);
+  }
+
   if (filter?.q) {
+    const matchingCustomers = await Customer.find({
+      nama: { $regex: filter.q, $options: "i" },
+    }).select("_id");
+
+    const customerIds = matchingCustomers.map((c) => c._id);
+
     safe.$or = [
       { nomorTiket: { $regex: filter.q, $options: "i" } },
       { keluhanAwal: { $regex: filter.q, $options: "i" } },
+      { customerId: { $in: customerIds } },
     ];
   }
 
@@ -139,7 +159,7 @@ const assignServiceTicket = async (ticketId, teknisiId, adminId) => {
   if (ticket.status !== "Diagnosis") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Hanya tiket berstatus 'Diagnosis' yang bisa ditugaskan."
+      "Hanya tiket berstatus 'Diagnosis' yang bisa ditugaskan.",
     );
   }
 
@@ -167,7 +187,7 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   if (status === "Diarsipkan" || status === "Selesai") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Gunakan endpoint 'complete' untuk menyelesaikan atau 'review' untuk mengarsipkan.`
+      `Gunakan endpoint 'complete' untuk menyelesaikan atau 'review' untuk mengarsipkan.`,
     );
   }
 
@@ -175,7 +195,7 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   if (user.role !== "Teknisi") {
     throw new ApiError(
       httpStatus.FORBIDDEN,
-      "Hanya Teknisi yang dapat mengubah status progres."
+      "Hanya Teknisi yang dapat mengubah status progres.",
     );
   }
   const isAssignedTeknisi =
@@ -184,7 +204,7 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   if (!isAssignedTeknisi) {
     throw new ApiError(
       httpStatus.FORBIDDEN,
-      "Anda bukan teknisi yang ditugaskan untuk tiket ini."
+      "Anda bukan teknisi yang ditugaskan untuk tiket ini.",
     );
   }
 
@@ -195,7 +215,7 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   ) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Tiket sudah final (Selesai, Dibatalkan, atau Diarsipkan) dan tidak bisa diubah."
+      "Tiket sudah final (Selesai, Dibatalkan, atau Diarsipkan) dan tidak bisa diubah.",
     );
   }
 
@@ -213,7 +233,7 @@ const updateServiceTicketStatus = async (ticketId, statusUpdateBody, user) => {
   if (!nexts.includes(status)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Transisi dari '${ticket.status}' ke '${status}' tidak diperbolehkan.`
+      `Transisi dari '${ticket.status}' ke '${status}' tidak diperbolehkan.`,
     );
   }
 
@@ -240,7 +260,7 @@ const completeByTeknisi = async (ticketId, completionBody, user) => {
   if (!diagnosis || !solusi) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Diagnosis dan Solusi wajib diisi."
+      "Diagnosis dan Solusi wajib diisi.",
     );
   }
 
@@ -249,7 +269,7 @@ const completeByTeknisi = async (ticketId, completionBody, user) => {
   if (user.role !== "Teknisi") {
     throw new ApiError(
       httpStatus.FORBIDDEN,
-      "Hanya Teknisi yang dapat menyelesaikan tiket."
+      "Hanya Teknisi yang dapat menyelesaikan tiket.",
     );
   }
   const isAssignedTeknisi =
@@ -257,7 +277,7 @@ const completeByTeknisi = async (ticketId, completionBody, user) => {
   if (!isAssignedTeknisi) {
     throw new ApiError(
       httpStatus.FORBIDDEN,
-      "Anda bukan teknisi yang ditugaskan untuk tiket ini."
+      "Anda bukan teknisi yang ditugaskan untuk tiket ini.",
     );
   }
 
@@ -268,7 +288,7 @@ const completeByTeknisi = async (ticketId, completionBody, user) => {
   ) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Tiket ini sudah dalam status final."
+      "Tiket ini sudah dalam status final.",
     );
   }
 
@@ -294,7 +314,7 @@ const addReplacementItem = async (ticketId, itemBody) => {
   if (!namaKomponen || !qty || qty < 1) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Nama Komponen dan Kuantitas (qty) wajib diisi."
+      "Nama Komponen dan Kuantitas (qty) wajib diisi.",
     );
   }
 
@@ -306,7 +326,7 @@ const addReplacementItem = async (ticketId, itemBody) => {
   ) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Tiket sudah final, tidak bisa menambah item."
+      "Tiket sudah final, tidak bisa menambah item.",
     );
   }
 
@@ -336,7 +356,7 @@ const findOrCreateTags = async (tagNames) => {
     ...new Set(
       tagNames
         .map((tag) => tag.trim().toLowerCase())
-        .filter((tag) => tag.length > 0)
+        .filter((tag) => tag.length > 0),
     ),
   ];
 
@@ -345,7 +365,7 @@ const findOrCreateTags = async (tagNames) => {
       const tag = await KBTag.findOneAndUpdate(
         { nama: tagName },
         { $setOnInsert: { nama: tagName } },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { upsert: true, new: true, setDefaultsOnInsert: true },
       );
       tagIds.push(tag._id);
     } catch (error) {
@@ -365,7 +385,7 @@ const completeTicketAndCreateKB = async (ticketId, kbBody, userId) => {
   if (!diagnosis || !solusi) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Diagnosis dan Solusi (yang sudah di-review) wajib diisi."
+      "Diagnosis dan Solusi (yang sudah di-review) wajib diisi.",
     );
   }
 
@@ -378,7 +398,7 @@ const completeTicketAndCreateKB = async (ticketId, kbBody, userId) => {
   if (ticket.status !== "Selesai" && ticket.status !== "Dibatalkan") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Hanya tiket yang berstatus 'Selesai' atau 'Dibatalkan' yang bisa di-review."
+      "Hanya tiket yang berstatus 'Selesai' atau 'Dibatalkan' yang bisa di-review.",
     );
   }
 
