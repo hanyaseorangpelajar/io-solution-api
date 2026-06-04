@@ -1,16 +1,3 @@
-/**
- * Seeder baru untuk I/O Solutions API (v3)
- * Dibuat konsisten dengan model data Mongoose dan alur kerja teknisi/admin.
- * Membuat:
- * - 20 Users (2 Admin, 18 Teknisi)
- * - 20 Customers
- * - 20 Devices
- * - 20 KBTags
- * - 30 ServiceTickets (20 Selesai/Diarsipkan, 10 Diagnosis)
- * - 20 KBEntries (dari 20 tiket yang Selesai)
- * - 20 LoginAttempts
- */
-
 require("dotenv").config();
 const mongoose = require("mongoose");
 const { connectDB, disconnectDB } = require("./src/config/db");
@@ -202,7 +189,7 @@ const seedDatabase = async () => {
       createdSelesaiTickets.push(newTicket);
     }
     console.log(
-      ` - Berhasil memasukkan ${createdSelesaiTickets.length} tiket 'Selesai'.`
+      ` - Berhasil memasukkan ${createdSelesaiTickets.length} tiket 'Selesai'.`,
     );
 
     console.log("   - Membuat 10 tiket 'Diagnosis'...");
@@ -210,7 +197,7 @@ const seedDatabase = async () => {
     for (let i = 0; i < 10; i++) {
       const device = pickRandom(createdDevices);
       const customer = createdCustomers.find((c) =>
-        c._id.equals(device.customerId)
+        c._id.equals(device.customerId),
       );
       const teknisi = pickRandom(teknisiUsers);
       const keluhan = pickRandom(KELUHAN_UMUM) || "Kerusakan baru.";
@@ -242,7 +229,7 @@ const seedDatabase = async () => {
       createdDiagnosisTickets.push(newTicket);
     }
     console.log(
-      ` - Berhasil memasukkan ${createdDiagnosisTickets.length} tiket 'Diagnosis'.`
+      ` - Berhasil memasukkan ${createdDiagnosisTickets.length} tiket 'Diagnosis'.`,
     );
 
     console.log("Seeding Knowledge Base Entries (dari 20 tiket 'Selesai')...");
@@ -262,7 +249,7 @@ const seedDatabase = async () => {
         dibuatOleh: pickRandom(adminUsers)._id,
         tags: pickRandomMultiple(
           createdTags,
-          faker.number.int({ min: 1, max: 3 })
+          faker.number.int({ min: 1, max: 3 }),
         ).map((t) => t._id),
       });
     }
@@ -279,11 +266,11 @@ const seedDatabase = async () => {
             catatan: "Di-review dan diarsipkan oleh Admin Seeder.",
           },
         },
-      }
+      },
     );
     console.log(` - Berhasil memasukkan ${kbEntriesData.length} KB entries.`);
     console.log(
-      ` - Berhasil mengupdate ${ticketIdsToArchive.length} tiket menjadi Diarsipkan.`
+      ` - Berhasil mengupdate ${ticketIdsToArchive.length} tiket menjadi Diarsipkan.`,
     );
 
     console.log("Seeding Login Attempts...");
@@ -301,7 +288,7 @@ const seedDatabase = async () => {
     }
     await LoginAttempt.create(loginAttemptsData);
     console.log(
-      ` - Berhasil memasukkan ${loginAttemptsData.length} login attempts.`
+      ` - Berhasil memasukkan ${loginAttemptsData.length} login attempts.`,
     );
 
     console.log("✅ Database seeding selesai!");

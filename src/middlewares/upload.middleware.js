@@ -11,7 +11,7 @@ const storage = multer.diskStorage({
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(
       null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
     );
   },
 });
@@ -27,9 +27,9 @@ const fileFilter = (req, file, cb) => {
     cb(
       new ApiError(
         httpStatus.BAD_REQUEST,
-        "Gagal upload. Hanya file .png, .jpg, atau .jpeg yang diizinkan."
+        "Gagal upload. Hanya file .png, .jpg, atau .jpeg yang diizinkan.",
       ),
-      false
+      false,
     );
   }
 };
@@ -38,7 +38,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 1024 * 1024 * 5,
+    fileSize: 1024 * 1024 * 10,
   },
 });
 
