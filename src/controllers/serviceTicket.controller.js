@@ -1,16 +1,15 @@
 const httpStatus = require("http-status");
 const { serviceTicketService } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
+const { toTicketDto } = require("../models/serviceTicket.model");
 
 const createTicketController = catchAsync(async (req, res) => {
   const createdById = req.user.id;
-
   const ticket = await serviceTicketService.createServiceTicket(
     req.body,
-    createdById
+    createdById,
   );
-
-  res.status(httpStatus.CREATED).send(ticket);
+  res.status(httpStatus.CREATED).send(toTicketDto(ticket));
 });
 
 const getTicketsController = catchAsync(async (req, res) => {
@@ -18,73 +17,80 @@ const getTicketsController = catchAsync(async (req, res) => {
   const { user } = req;
 
   if (user.role === "Teknisi") {
-    filter.teknisiId = user.id;
+    filter.technicianId = user.id;
   }
 
   const result = await serviceTicketService.getServiceTickets(filter);
-  res.send(result);
+
+  res.send({
+    ...result,
+    results: result.results.map(toTicketDto),
+  });
 });
 
 const getTicketController = catchAsync(async (req, res) => {
   const ticket = await serviceTicketService.getServiceTicketById(req.params.id);
-  res.send(ticket);
+  res.send(toTicketDto(ticket));
 });
 
 const assignTicketController = catchAsync(async (req, res) => {
-  const { teknisiId } = req.body;
-  if (!teknisiId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "teknisiId wajib diisi.");
+  const { technicianId } = req.body;
+  if (!technicianId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "technicianId is required.");
   }
   const ticket = await serviceTicketService.assignServiceTicket(
     req.params.id,
-    teknisiId,
-    req.user.id
+    technicianId,
+    req.user.id,
   );
-  res.send(ticket);
+  res.send(toTicketDto(ticket));
 });
 
 const updateStatusController = catchAsync(async (req, res) => {
-  const { status, catatan } = req.body;
+  const { status, note } = req.body;
   const updatedTicket = await serviceTicketService.updateServiceTicketStatus(
     req.params.id,
-    { status, catatan },
-    req.user
+    { status, note },
+    req.user,
   );
-  res.send(updatedTicket);
+  res.send(toTicketDto(updatedTicket));
 });
 
 const addItemController = catchAsync(async (req, res) => {
   const ticket = await serviceTicketService.addReplacementItem(
     req.params.id,
-    req.body
+    req.body,
   );
-  res.send(ticket);
+  res.send(toTicketDto(ticket));
 });
 
 const completeByTeknisiController = catchAsync(async (req, res) => {
-  const { diagnosis, solusi } = req.body;
+  const { diagnosis, solution } = req.body;
   const ticket = await serviceTicketService.completeByTeknisi(
     req.params.id,
-    { diagnosis, solusi },
-    req.user
+    { diagnosis, solution },
+    req.user,
   );
-  res.status(httpStatus.OK).send(ticket);
+  res.status(httpStatus.OK).send(toTicketDto(ticket));
 });
 
 const completeTicketController = catchAsync(async (req, res) => {
-  const { diagnosis, solusi, tags } = req.body;
+  const { diagnosis, solution, tags } = req.body;
   const result = await serviceTicketService.completeTicketAndCreateKB(
     req.params.id,
-    { diagnosis, solusi, tags },
-    req.user.id
+    { diagnosis, solution, tags },
+    req.user.id,
   );
-  res.status(httpStatus.OK).send(result);
+  res.status(httpStatus.OK).send({
+    ticket: toTicketDto(result.ticket),
+    kbEntry: result.kbEntry,
+  });
 });
 
 const getGlobalHistoryController = catchAsync(async (req, res) => {
   const result = await serviceTicketService.getGlobalStatusHistory(
     req.query,
-    req.user
+    req.user,
   );
   res.send(result);
 });
