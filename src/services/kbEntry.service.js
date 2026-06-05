@@ -1,27 +1,27 @@
 const httpStatus = require("http-status");
 const { KBEntry } = require("../models/kbEntry.model");
 const { KBTag } = require("../models/kbTag.model");
-const { ApiError } = require("../utils");
+const { ApiError, parsePagination } = require("../utils");
 const { ServiceTicket } = require("../models/serviceTicket.model");
 
 const checkAuthorization = async (entry, user) => {
-  if (user.role === "Admin" || user.role === "SysAdmin") {
+  if (user.role === "ADMIN" || user.role === "SYSADMIN") {
     return;
   }
-  if (user.role === "Teknisi") {
+  if (user.role === "TEKNISI") {
     const ticket = await ServiceTicket.findById(entry.sourceTicketId).select(
-      "teknisiId"
+      "technicianId",
     );
     if (!ticket) {
       throw new ApiError(
         httpStatus.NOT_FOUND,
-        "Tiket sumber untuk entri KB ini tidak ditemukan."
+        "Tiket sumber untuk entri KB ini tidak ditemukan.",
       );
     }
-    if (ticket.teknisiId?.toString() !== user.id.toString()) {
+    if (ticket.technicianId?.toString() !== user.id.toString()) {
       throw new ApiError(
         httpStatus.FORBIDDEN,
-        "Akses ditolak. Anda hanya dapat mengelola entri KB dari tiket yang Anda tangani."
+        "Akses ditolak. Anda hanya dapat mengelola entri KB dari tiket yang Anda tangani.",
       );
     }
     return;
@@ -30,99 +30,91 @@ const checkAuthorization = async (entry, user) => {
 };
 
 const findOrCreateTags = async (tagNames) => {
-  if (!Array.isArray(tagNames) || tagNames.length === 0) {
-    return [];
-  }
+  if (!Array.isArray(tagNames) || tagNames.length === 0) return [];
+
   const tagIds = [];
   const uniqueNormalizedTags = [
-    ...new Set(
-      tagNames
-        .map((tag) => tag.trim().toLowerCase())
-        .filter((tag) => tag.length > 0)
-    ),
+    ...new Set(tagNames.map((tag) => tag.trim().toLowerCase()).filter(Boolean)),
   ];
+
   for (const tagName of uniqueNormalizedTags) {
     try {
       const tag = await KBTag.findOneAndUpdate(
-        { nama: tagName },
-        { $setOnInsert: { nama: tagName } },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { name: tagName },
+        { $setOnInsert: { name: tagName } },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
       );
       tagIds.push(tag._id);
     } catch (error) {
-      console.warn(`Gagal memproses tag '${tagName}': ${error.message}`);
+      console.warn(`Failed processing tag '${tagName}': ${error.message}`);
     }
   }
   return tagIds;
 };
 
-/**
- * Mencari/Mengambil daftar Knowledge Base Entries.
- */
 const getKBEntries = async (filter) => {
-  const { q } = filter;
-  let query = {};
+  const { page, limit, skip } = parsePagination(filter, 10);
+  const safe = {};
 
-  if (q) {
-    const searchQuery = { $regex: q, $options: "i" };
-    query.$or = [
-      { gejala: searchQuery },
-      { modelPerangkat: searchQuery },
-      { diagnosis: searchQuery },
-      { solusi: searchQuery },
+  if (filter.q) {
+    safe.$or = [
+      { symptom: { $regex: filter.q, $options: "i" } },
+      { deviceModel: { $regex: filter.q, $options: "i" } },
+      { diagnosis: { $regex: filter.q, $options: "i" } },
+      { solution: { $regex: filter.q, $options: "i" } },
     ];
   }
 
-  const entries = await KBEntry.find(query)
-    .populate("dibuatOleh", "nama")
-    .populate("sourceTicketId", "_id nomorTiket teknisiId")
-    .populate("tags", "nama")
-    .sort({ dibuatPada: -1 });
+  if (filter.tag) {
+    const tagDoc = await KBTag.findOne({ name: filter.tag.toLowerCase() });
+    if (tagDoc) safe.tags = tagDoc._id;
+  }
 
-  return {
-    results: entries,
-    totalResults: entries.length,
-  };
+  const [results, totalResults] = await Promise.all([
+    KBEntry.find(safe)
+      .populate("createdBy", "name")
+      .populate("sourceTicketId", "ticketNumber technicianId")
+      .populate("tags", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    KBEntry.countDocuments(safe),
+  ]);
+
+  const totalPages = Math.ceil(totalResults / limit) || 1;
+  return { results, page, limit, totalResults, totalPages };
 };
 
-/**
- * Mengambil satu KB Entry berdasarkan ID.
- */
 const getKBEntryById = async (kbId) => {
   const entry = await KBEntry.findById(kbId)
-    .populate("dibuatOleh", "nama")
     .populate({
       path: "sourceTicketId",
-      select: "nomorTiket customerId deviceId teknisiId",
+      select: "ticketNumber initialComplaint createdAt deviceId technicianId",
       populate: [
-        { path: "customerId", select: "nama" },
         { path: "deviceId", select: "model brand" },
-        { path: "teknisiId", select: "nama" },
+        { path: "technicianId", select: "name" },
       ],
     })
-    .populate("tags", "nama");
+    .populate("tags", "name")
+    .populate("createdBy", "name");
 
   if (!entry) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
-      "Knowledge Base Entry tidak ditemukan"
+      "Knowledge Base Entry tidak ditemukan",
     );
   }
   return entry;
 };
 
-/**
- * Mengupdate KB Entry (oleh Admin atau Teknisi pemilik).
- */
 const updateKBEntry = async (kbId, updateBody, user) => {
   const entry = await getKBEntryById(kbId);
   await checkAuthorization(entry, user);
 
-  if (updateBody.gejala) entry.gejala = updateBody.gejala;
-  if (updateBody.modelPerangkat)
-    entry.modelPerangkat = updateBody.modelPerangkat;
+  if (updateBody.symptom) entry.symptom = updateBody.symptom;
+  if (updateBody.deviceModel) entry.deviceModel = updateBody.deviceModel;
   if (updateBody.diagnosis) entry.diagnosis = updateBody.diagnosis;
-  if (updateBody.solusi) entry.solusi = updateBody.solusi;
+  if (updateBody.solution) entry.solution = updateBody.solution;
 
   if (typeof updateBody.imageUrl === "string" || updateBody.imageUrl === null) {
     entry.imageUrl = updateBody.imageUrl;
@@ -137,9 +129,6 @@ const updateKBEntry = async (kbId, updateBody, user) => {
   return getKBEntryById(kbId);
 };
 
-/**
- * Menghapus KB Entry (oleh Admin atau Teknisi pemilik).
- */
 const deleteKBEntry = async (kbId, user) => {
   const entry = await getKBEntryById(kbId);
   await checkAuthorization(entry, user);
@@ -152,4 +141,5 @@ module.exports = {
   getKBEntryById,
   updateKBEntry,
   deleteKBEntry,
+  findOrCreateTags,
 };

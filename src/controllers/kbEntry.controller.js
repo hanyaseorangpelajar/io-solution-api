@@ -1,23 +1,27 @@
 const httpStatus = require("http-status");
 const { kbEntryService } = require("../services");
-const { catchAsync, ApiError } = require("../utils");
+const { catchAsync } = require("../utils");
+const { toKBEntryDto } = require("../models/kbEntry.model");
 
 const getEntriesController = catchAsync(async (req, res) => {
   const result = await kbEntryService.getKBEntries(req.query);
-  res.send(result);
+  res.send({
+    ...result,
+    results: result.results.map(toKBEntryDto),
+  });
 });
 
 const getEntryController = catchAsync(async (req, res) => {
   const entry = await kbEntryService.getKBEntryById(req.params.id);
-  res.send(entry);
+  res.send(toKBEntryDto(entry));
 });
 
 const updateEntryController = catchAsync(async (req, res) => {
   const updateData = {
-    gejala: req.body.gejala,
-    modelPerangkat: req.body.modelPerangkat,
+    symptom: req.body.symptom,
+    deviceModel: req.body.deviceModel,
     diagnosis: req.body.diagnosis,
-    solusi: req.body.solusi,
+    solution: req.body.solution,
     tags: req.body.tags,
     imageUrl: req.body.imageUrl,
   };
@@ -25,9 +29,9 @@ const updateEntryController = catchAsync(async (req, res) => {
   const entry = await kbEntryService.updateKBEntry(
     req.params.id,
     updateData,
-    req.user
+    req.user,
   );
-  res.send(entry);
+  res.send(toKBEntryDto(entry));
 });
 
 const deleteEntryController = catchAsync(async (req, res) => {

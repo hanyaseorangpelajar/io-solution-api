@@ -3,13 +3,13 @@ const { Schema } = mongoose;
 
 const kbEntrySchema = new Schema(
   {
-    gejala: {
+    symptom: {
       type: String,
       required: [true, "Gejala wajib diisi"],
       trim: true,
       index: true,
     },
-    modelPerangkat: {
+    deviceModel: {
       type: String,
       required: [true, "Model perangkat wajib diisi"],
       trim: true,
@@ -20,7 +20,7 @@ const kbEntrySchema = new Schema(
       required: [true, "Diagnosis wajib diisi"],
       trim: true,
     },
-    solusi: {
+    solution: {
       type: String,
       required: [true, "Solusi wajib diisi"],
       trim: true,
@@ -36,7 +36,7 @@ const kbEntrySchema = new Schema(
       unique: true,
       index: true,
     },
-    dibuatOleh: {
+    createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: [true, "Pembuat entri wajib diisi"],
@@ -50,17 +50,42 @@ const kbEntrySchema = new Schema(
     ],
   },
   {
-    timestamps: { createdAt: "dibuatPada", updatedAt: "diperbaruiPada" },
-    toJSON: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-      },
-    },
-  }
+    timestamps: true,
+  },
 );
+
+const toKBEntryDto = (doc) => ({
+  kbId: doc._id.toString(),
+  symptom: doc.symptom,
+  deviceModel: doc.deviceModel,
+  diagnosis: doc.diagnosis,
+  solution: doc.solution,
+  imageUrl: doc.imageUrl || null,
+
+  sourceTicket: doc.sourceTicketId?._id
+    ? {
+        ticketId: doc.sourceTicketId._id.toString(),
+        ticketNumber: doc.sourceTicketId.ticketNumber,
+        technicianId: doc.sourceTicketId.technicianId?.toString(),
+      }
+    : doc.sourceTicketId,
+
+  createdBy: doc.createdBy?._id
+    ? {
+        userId: doc.createdBy._id.toString(),
+        name: doc.createdBy.name,
+      }
+    : doc.createdBy,
+
+  tags: (doc.tags || []).map((t) => ({
+    tagId: t._id?.toString() || t,
+    name: t.name || "",
+  })),
+
+  createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt,
+});
 
 const KBEntry = mongoose.model("KBEntry", kbEntrySchema);
 
-module.exports = { KBEntry };
+module.exports = { KBEntry, toKBEntryDto };
