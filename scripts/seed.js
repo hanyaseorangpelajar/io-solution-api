@@ -188,7 +188,7 @@ const seedDatabase = async () => {
         deviceModel: `${device.brand} ${device.model}`,
         diagnosis: ticket.technicianDiagnosis || faker.lorem.paragraph(),
         solution: ticket.technicianSolution || faker.lorem.paragraph(),
-        imageUrl: faker.image.urlPlaceholder(),
+        imageUrl: faker.image.url(),
         sourceTicketId: ticket._id,
         createdBy: adminUser._id,
         tags: pickRandomMultiple(createdTags, 2).map((t) => t._id),

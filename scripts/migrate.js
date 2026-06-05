@@ -12,7 +12,7 @@ async function runMigration() {
   await connectDB();
   console.log("Terhubung ke MongoDB. Memulai migrasi massal...");
 
-  const models = [ServiceTicket, User, Customer, KBEntry, Device];
+  const models = [ServiceTicket, User, Customer, KBEntry, Device, KBTag];
 
   // --- 1. HAPUS INDEX LAMA UNTUK MENCEGAH DUPLICATE KEY ERROR ---
   console.log("Menghapus index lama...");
