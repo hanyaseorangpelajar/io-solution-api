@@ -4,19 +4,14 @@ const { generateToken } = require("./token.service");
 const { ApiError } = require("../utils");
 const { LoginAttempt } = require("../models/loginAttempt.model");
 
-/**
- * Registrasi pengguna baru (Admin)
- * @param {object} userBody - Data pengguna (nama, username, password, role)
- * @returns {Promise<User>}
- */
 const register = async (userBody) => {
-  const { nama, username, password, role } = userBody;
+  const { name, username, password, role } = userBody;
   const normalizedUsername = (username || "").toLowerCase();
 
-  if (!nama || !normalizedUsername || !password || !role) {
+  if (!name || !normalizedUsername || !password || !role) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Nama, Username, Password, dan Role wajib diisi."
+      "Nama, Username, Password, dan Role wajib diisi.",
     );
   }
 
@@ -25,7 +20,7 @@ const register = async (userBody) => {
   }
 
   const user = await User.create({
-    nama,
+    name,
     username: normalizedUsername,
     passwordHash: password,
     role,
@@ -34,13 +29,6 @@ const register = async (userBody) => {
   return user;
 };
 
-/**
- * Login pengguna
- * @param {string} username - Hanya username
- * @param {string} password
- * @param {object} req - Objek request Express
- * @returns {Promise<{user: object, token: string}>}
- */
 const login = async (username, password, req) => {
   const uname = (username || "").toLowerCase();
 
@@ -48,7 +36,7 @@ const login = async (username, password, req) => {
   const userAgent = req.headers["user-agent"];
 
   const user = await User.findOne({ username: uname }).select(
-    "+passwordHash +statusAktif"
+    "+passwordHash +isActive",
   );
 
   if (!user || !(await user.comparePassword(password))) {
@@ -60,11 +48,11 @@ const login = async (username, password, req) => {
     });
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
-      "Username atau password salah."
+      "Username atau password salah.",
     );
   }
 
-  if (!user.statusAktif) {
+  if (!user.isActive) {
     throw new ApiError(httpStatus.FORBIDDEN, "Akun Anda telah dinonaktifkan.");
   }
 
