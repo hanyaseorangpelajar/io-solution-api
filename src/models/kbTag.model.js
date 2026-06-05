@@ -3,25 +3,18 @@ const { Schema } = mongoose;
 
 const kbTagSchema = new Schema(
   {
-    nama: {
+    name: {
       type: String,
-      required: true,
-      trim: true,
+      required: [true, "Nama tag wajib diisi"],
       unique: true,
+      trim: true,
       lowercase: true,
       index: true,
     },
   },
   {
-    timestamps: false,
-    toJSON: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-      },
-    },
-  }
+    timestamps: true,
+  },
 );
 
 const KBTag = mongoose.model("KBTag", kbTagSchema);
