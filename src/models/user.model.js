@@ -2,36 +2,15 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { Schema } = mongoose;
 
-const ROLES = ["Teknisi", "Admin", "SysAdmin"];
-
-const SecuritySettingsSchema = new Schema(
-  {
-    twoFactorEnabled: { type: Boolean, default: false },
-    recoveryEmail: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      default: null,
-    },
-  },
-  { _id: false }
-);
-const NotificationSettingsSchema = new Schema(
-  {
-    updates: { type: Boolean, default: true },
-    announcements: { type: Boolean, default: true },
-    alerts: { type: Boolean, default: true },
-    frequency: {
-      type: String,
-      enum: ["immediate", "daily", "weekly"],
-      default: "immediate",
-    },
-  },
-  { _id: false }
-);
+const ROLES = ["SYSADMIN", "ADMIN", "TEKNISI"];
 
 const UserSchema = new Schema(
   {
+    name: {
+      type: String,
+      required: [true, "Nama wajib diisi"],
+      trim: true,
+    },
     username: {
       type: String,
       required: [true, "Username wajib diisi"],
@@ -40,103 +19,68 @@ const UserSchema = new Schema(
       lowercase: true,
       index: true,
     },
-    email: {
+    passwordHash: {
       type: String,
-      required: [true, "Email wajib diisi"],
-      unique: true,
-      trim: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Masukkan alamat email yang valid"],
-      index: true,
-    },
-    password: {
-      type: String,
-      trim: true,
-      minlength: [8, "Password minimal 8 karakter"],
+      required: [true, "Password wajib diisi"],
       private: true,
-    },
-    fullName: {
-      type: String,
-      required: [true, "Nama lengkap wajib diisi"],
-      trim: true,
+      select: false,
     },
     role: {
       type: String,
-      enum: ROLES,
-      required: [true, "Role wajib diisi"],
-      default: "Teknisi",
-      index: true,
+      enum: {
+        values: ROLES,
+        message: "Role tidak valid ({VALUE})",
+      },
+      required: true,
+      default: "TEKNISI",
     },
-    active: {
+    isActive: {
       type: Boolean,
       default: true,
       index: true,
     },
-    securitySettings: {
-      type: SecuritySettingsSchema,
-      default: () => ({}),
-      select: false,
-    },
-    notificationSettings: {
-      type: NotificationSettingsSchema,
-      default: () => ({}),
-      select: false,
-    },
   },
   {
     timestamps: true,
-    toJSON: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        ret.name = ret.fullName;
-        delete ret._id;
-        delete ret.fullName;
-        delete ret.password;
-        delete ret.__v;
-        return ret;
-      },
-    },
-    toObject: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        ret.name = ret.fullName;
-        delete ret._id;
-        delete ret.fullName;
-        delete ret.password;
-        delete ret.__v;
-        return ret;
-      },
-    },
-  }
+  },
 );
 
-UserSchema.statics.isEmailTaken = async function (email, excludeUserId) {
-  const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
-  return !!user;
+UserSchema.statics.findByUsernameWithPassword = function (username) {
+  return this.findOne({ username }).select("+passwordHash");
 };
+
 UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
-  const user = await this.findOne({ username, _id: { $ne: excludeUserId } });
+  const query = { username: username.toLowerCase() };
+  if (excludeUserId) {
+    query._id = { $ne: excludeUserId };
+  }
+  const user = await this.findOne(query);
   return !!user;
 };
 
 UserSchema.pre("save", async function (next) {
   const user = this;
-  if (user.isModified("password")) {
+  if (user.isModified("passwordHash")) {
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(user.password, salt);
+    user.passwordHash = await bcrypt.hash(user.passwordHash, salt);
   }
   next();
 });
 
 UserSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+  return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
+const toUserDto = (doc) => ({
+  userId: doc._id.toString(),
+  name: doc.name,
+  username: doc.username,
+  role: doc.role,
+  isActive: doc.isActive,
+  createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt,
+});
 
-module.exports = {
-  User,
-  ROLES,
-  isEmailTaken: User.isEmailTaken,
-  isUsernameTaken: User.isUsernameTaken,
-};
+const User = mongoose.model("User", UserSchema);
+
+module.exports = { User, ROLES, toUserDto };

@@ -1,226 +1,143 @@
 const httpStatus = require("http-status");
-const mongoose = require("mongoose");
-const { ROLES } = require("../models");
-const { ApiError } = require("../utils");
-const { User } = require("../models/user.model");
+const { User, ROLES } = require("../models/user.model");
+const { ApiError, parsePagination } = require("../utils");
+const { LoginAttempt } = require("../models/loginAttempt.model");
 
-/**
- * Membuat pengguna baru (oleh SysAdmin).
- * @param {Object} userBody - Data pengguna (username, email, password, name, role).
- * @returns {Promise<User>}
- */
-
-/**
- * Membuat pengguna baru (oleh SysAdmin).
- * @param {Object} userBody - Data pengguna (username, email, password, fullName, role). // <-- (Doc diperbarui)
- * @returns {Promise<User>}
- */
 const createUser = async (userBody) => {
-  const { username, email, password, fullName, role } = userBody;
+  const { name, username, password, role } = userBody;
 
-  if (!username || !email || !password || !fullName || !role) {
+  if (!name || !username || !password || !role) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Username, Email, Password, Nama Lengkap, dan Role wajib diisi."
+      "Name, Username, Password, dan Role wajib diisi.",
     );
   }
   if (!ROLES.includes(role)) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Role tidak valid. Pilihan: ${ROLES.join(", ")}`,
+    );
   }
 
   if (await User.isUsernameTaken(username)) {
-  }
-  if (await User.isEmailTaken(email)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Username sudah digunakan.");
   }
 
   const user = await User.create({
+    name,
     username,
-    email,
-    password,
-    fullName,
+    passwordHash: password,
     role,
+    isActive: userBody.isActive ?? true,
   });
+
   return user;
 };
 
-/**
- * Mendapatkan semua pengguna dengan filter.
- * @param {Object} filter - Filter query Mongoose (misal { role: 'Teknisi', active: true }).
- * @param {Object} options - Opsi query (limit, skip, sort).
- * @returns {Promise<{results: User[], totalResults: number}>}
- */
-const getUsers = async (filter, options = {}) => {
-  const queryFilter = { ...filter };
+const getUsers = async (filter) => {
+  const { page, limit, skip } = parsePagination(filter, 10);
+  const safe = {};
 
-  if (filter.active === "all" || filter.active === undefined) {
-    delete queryFilter.active;
-  } else {
-    queryFilter.active = filter.active;
+  if (filter.q) {
+    safe.$or = [
+      { name: { $regex: filter.q, $options: "i" } },
+      { username: { $regex: filter.q, $options: "i" } },
+    ];
   }
 
-  const { limit = 10, skip = 0, sort = { fullName: 1 } } = options;
+  if (filter.role && filter.role !== "all") {
+    safe.role = filter.role;
+  }
+  if (filter.isActive !== undefined && filter.isActive !== "all") {
+    safe.isActive = filter.isActive === "true" || filter.isActive === true;
+  }
 
-  const users = await User.find(queryFilter)
-    .sort(sort)
-    .skip(skip)
-    .limit(limit)
-    .lean();
+  const [results, totalResults] = await Promise.all([
+    User.find(safe).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    User.countDocuments(safe),
+  ]);
 
-  const totalResults = await User.countDocuments(queryFilter);
+  const totalPages = Math.ceil(totalResults / limit) || 1;
 
-  const results = users.map((user) => {
-    user.id = user._id.toString();
-    user.name = user.fullName;
-    delete user._id;
-    delete user.fullName;
-    delete user.__v;
-    delete user.password;
-    return user;
-  });
-
-  return { results, totalResults };
+  return { results, page, limit, totalResults, totalPages };
 };
 
-/**
- * Mendapatkan satu pengguna berdasarkan ID.
- * @param {string} id - ID Pengguna.
- * @returns {Promise<User>}
- */
-const getUserById = async (id) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "ID Pengguna tidak valid.");
-  }
-  const user = await User.findById(id);
+const getUserById = async (userId) => {
+  const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
   }
   return user;
 };
 
-/**
- * Memperbarui pengguna berdasarkan ID (oleh SysAdmin).
- * @param {string} userId - ID Pengguna.
- * @param {Object} updateBody - Data untuk pembaruan (misal { fullName, role, active }).
- * @returns {Promise<User>}
- */
 const updateUserById = async (userId, updateBody) => {
   const user = await getUserById(userId);
 
-  const allowedUpdates = ["fullName", "role", "active"];
-  const filteredUpdateBody = {};
-  Object.keys(updateBody).forEach((key) => {
-    if (allowedUpdates.includes(key)) {
-      filteredUpdateBody[key] = updateBody[key];
-    }
-  });
-
-  if (filteredUpdateBody.role && !ROLES.includes(filteredUpdateBody.role)) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      `Role '${filteredUpdateBody.role}' tidak valid.`
-    );
-  }
   if (
-    filteredUpdateBody.active !== undefined &&
-    typeof filteredUpdateBody.active !== "boolean"
+    updateBody.username &&
+    (await User.isUsernameTaken(updateBody.username, userId))
   ) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Field 'active' harus boolean.");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Username sudah digunakan.");
   }
 
-  Object.assign(user, filteredUpdateBody);
+  if (updateBody.name) user.name = updateBody.name;
+  if (updateBody.username) user.username = updateBody.username;
+  if (updateBody.role) user.role = updateBody.role;
+  if (updateBody.password) user.passwordHash = updateBody.password;
+  if (updateBody.isActive !== undefined) user.isActive = updateBody.isActive;
+
   await user.save();
   return user;
 };
 
-/**
- * Menghapus pengguna berdasarkan ID (oleh SysAdmin).
- * Sebaiknya soft delete (set active=false) daripada hard delete.
- * @param {string} userId - ID Pengguna.
- * @returns {Promise<User>} User yang dinonaktifkan
- */
-const deleteUserById = async (userId) => {
-  const user = await User.findByIdAndDelete(userId);
-
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
-  }
-
-  console.log(`User ${user.username} (ID: ${userId}) telah DIHAPUS.`);
-  return user;
-};
-
-/**
- * Memperbarui profil dan pengaturan pengguna yang sedang login.
- * @param {string} userId - ID pengguna dari req.user.
- * @param {Object} updateBody - Data untuk pembaruan (name, email, phone, department, avatarUrl, settings).
- * @returns {Promise<User>}
- */
 const updateUserProfile = async (userId, updateBody) => {
-  const user = await getUserById(userId).select(
-    "+securitySettings +notificationSettings"
-  );
-
-  const allowedUpdates = [
-    "name",
-    "email",
-    "securitySettings",
-    "notificationSettings",
-  ];
-
-  const filteredUpdateBody = {};
-  Object.keys(updateBody).forEach((key) => {
-    if (allowedUpdates.includes(key)) {
-      if (key === "name") {
-        filteredUpdateBody["fullName"] = updateBody[key];
-      } else {
-        if (key === "securitySettings" || key === "notificationSettings") {
-          if (!user[key]) user[key] = {};
-          Object.assign(user[key], updateBody[key]);
-        } else {
-          filteredUpdateBody[key] = updateBody[key];
-        }
-      }
-    }
-  });
-
-  if (filteredUpdateBody.email && filteredUpdateBody.email !== user.email) {
-    if (await User.isEmailTaken(filteredUpdateBody.email, userId)) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "Email sudah digunakan oleh pengguna lain."
-      );
-    }
-    user.email = filteredUpdateBody.email;
+  const user = await getUserById(userId);
+  if (updateBody.name) {
+    user.name = updateBody.name;
   }
-
-  Object.keys(filteredUpdateBody).forEach((key) => {
-    if (
-      key !== "email" &&
-      key !== "securitySettings" &&
-      key !== "notificationSettings"
-    ) {
-      user[key] = filteredUpdateBody[key];
-    }
-  });
-
   await user.save();
-
   return user;
 };
 
 const changeUserPassword = async (userId, currentPassword, newPassword) => {
-  const user = await User.findById(userId).select("+password");
+  const user = await User.findById(userId).select("+passwordHash");
 
-  if (!user) {
+  if (!user)
     throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
-  }
 
-  const isMatch = await user.isPasswordMatch(currentPassword);
-  if (!isMatch) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Password saat ini salah");
-  }
+  const isMatch = await user.comparePassword(currentPassword);
+  if (!isMatch)
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Password saat ini tidak cocok.",
+    );
 
-  user.password = newPassword;
+  user.passwordHash = newPassword;
   await user.save();
+  return user;
+};
+
+const getLoginHistoryByUserId = async (userId, query) => {
+  const { page, limit, skip } = parsePagination(query, 10);
+  const queryFilter = { user: userId };
+
+  const [logs, totalResults] = await Promise.all([
+    LoginAttempt.find(queryFilter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    LoginAttempt.countDocuments(queryFilter),
+  ]);
+
+  const totalPages = Math.ceil(totalResults / limit) || 1;
+  return { results: logs, page, limit, totalResults, totalPages };
+};
+
+const deleteUserById = async (userId) => {
+  const user = await getUserById(userId);
+  await user.deleteOne();
+  return user;
 };
 
 module.exports = {
@@ -231,4 +148,5 @@ module.exports = {
   deleteUserById,
   updateUserProfile,
   changeUserPassword,
+  getLoginHistoryByUserId,
 };

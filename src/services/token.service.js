@@ -2,8 +2,15 @@ const jwt = require("jsonwebtoken");
 const httpStatus = require("http-status");
 const { ApiError } = require("../utils");
 
-const JWT_SECRET = process.env.JWT_SECRET || "rahasia-super-rahasia-default";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === "production"
+    ? (() => {
+        throw new Error("JWT_SECRET harus di-set di production");
+      })()
+    : "rahasia-super-rahasia-default");
+
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
 
 /**
  * Generate JWT token
@@ -18,14 +25,10 @@ const generateToken = (userId) => {
     sub: userId,
     iat: Math.floor(Date.now() / 1000),
   };
-  try {
-    return jwt.sign(payload, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    });
-  } catch (error) {
-    console.error("Error signing JWT:", error);
-    throw new Error("Gagal membuat token autentikasi.");
-  }
+
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
 };
 
 /**

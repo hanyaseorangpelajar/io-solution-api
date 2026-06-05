@@ -1,4 +1,3 @@
-// server.js
 require("dotenv").config();
 const http = require("http");
 const app = require("./src/app");
@@ -9,7 +8,6 @@ const HOST = process.env.HOST || "0.0.0.0";
 
 let server;
 
-// start sequence
 (async () => {
   try {
     await connectDB();
@@ -20,11 +18,10 @@ let server;
       console.log(
         `🚀 Server running in ${
           process.env.NODE_ENV || "development"
-        } mode on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`
+        } mode on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`,
       );
     });
 
-    // handle unexpected errors
     process.on("unhandledRejection", (reason) => {
       console.error("Unhandled Rejection:", reason);
       shutdown(1);
@@ -43,7 +40,6 @@ let server;
   }
 })();
 
-// graceful shutdown
 async function shutdown(code) {
   try {
     if (server) {

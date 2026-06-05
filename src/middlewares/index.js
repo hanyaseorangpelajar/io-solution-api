@@ -1,9 +1,10 @@
 const { protect, authorize } = require("./auth.middleware");
-const { notFound, errorHandler } = require("./error");
+// Impor error handler dari file error.js
+const { notFound, errorHandler } = require("./error.js");
 
 module.exports = {
   protect,
   authorize,
-  notFound,
-  errorHandler,
+  notFound, // Ekspor notFound
+  errorHandler, // Ekspor errorHandler
 };

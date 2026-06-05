@@ -1,71 +1,72 @@
 const httpStatus = require("http-status");
-const { User } = require("../models");
+const { User } = require("../models/user.model");
 const { generateToken } = require("./token.service");
 const { ApiError } = require("../utils");
+const { LoginAttempt } = require("../models/loginAttempt.model");
 
-/**
- * Registrasi pengguna baru
- * @param {object} userBody - Data pengguna (username, email, password, name, role)
- * @returns {Promise<User>} User object (tanpa password)
- */
 const register = async (userBody) => {
-  const { username, email, password, name, role } = userBody;
+  const { name, username, password, role } = userBody;
+  const normalizedUsername = (username || "").toLowerCase();
 
-  if (!username || !email || !password || !name) {
+  if (!name || !normalizedUsername || !password || !role) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Username, Email, Password, dan Nama wajib diisi."
+      "Nama, Username, Password, dan Role wajib diisi.",
     );
   }
 
-  if (await User.isUsernameTaken(username)) {
+  if (await User.isUsernameTaken(normalizedUsername)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Username sudah digunakan.");
-  }
-  if (await User.isEmailTaken(email)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email sudah digunakan.");
   }
 
   const user = await User.create({
-    username,
-    email,
-    password,
-    fullName: name,
+    name,
+    username: normalizedUsername,
+    passwordHash: password,
     role,
   });
 
   return user;
 };
 
-/**
- * Login pengguna
- * @param {string} identifier - Bisa username atau email
- * @param {string} password
- * @returns {Promise<{user: object, token: string}>}
- */
-const login = async (identifier, password) => {
-  const user = await User.findOne({
-    $or: [
-      { email: identifier.toLowerCase() },
-      { username: identifier.toLowerCase() },
-    ],
-  }).select("+password +active");
+const login = async (username, password, req) => {
+  const uname = (username || "").toLowerCase();
+
+  const ip = req.ip;
+  const userAgent = req.headers["user-agent"];
+
+  const user = await User.findOne({ username: uname }).select(
+    "+passwordHash +isActive",
+  );
 
   if (!user || !(await user.comparePassword(password))) {
+    await LoginAttempt.create({
+      usernameAttempt: uname,
+      success: false,
+      ip: ip,
+      userAgent: userAgent,
+    });
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
-      "Username/Email atau password salah."
-    );
-  }
-  if (!user.active) {
-    throw new ApiError(
-      httpStatus.FORBIDDEN,
-      "Akun Anda tidak aktif. Silakan hubungi administrator."
+      "Username atau password salah.",
     );
   }
 
-  const token = generateToken(user._id);
+  if (!user.isActive) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Akun Anda telah dinonaktifkan.");
+  }
 
-  return { user: user.toJSON(), token };
+  const token = generateToken(user.id);
+
+  await LoginAttempt.create({
+    user: user.id,
+    usernameAttempt: uname,
+    success: true,
+    ip: ip,
+    userAgent: userAgent,
+  });
+
+  return { user, token };
 };
 
 module.exports = {

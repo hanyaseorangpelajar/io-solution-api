@@ -1,41 +1,27 @@
-const { verifyToken } = require("../services");
-const { User } = require("../models");
-const { ApiError, catchAsync } = require("../utils");
+const jwt = require("jsonwebtoken");
+const { ApiError } = require("../utils/ApiError");
+const { tokenService } = require("../services");
+const { User } = require("../models/user.model");
 const httpStatus = require("http-status-codes");
 
 /**
  * Middleware untuk memverifikasi token JWT (Autentikasi) - Protect Route
  */
-const protect = catchAsync(async (req, res, next) => {
-  let token;
-  const authHeader = req.headers.authorization;
-
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    token = authHeader.split(" ")[1];
-  }
-
-  if (!token) {
-    throw new ApiError(
-      httpStatus.UNAUTHORIZED,
-      "Akses ditolak. Token tidak ditemukan."
-    );
-  }
-
+const protect = async (req, res, next) => {
   try {
-    const payload = await verifyToken(token);
-
-    const user = await User.findById(payload.sub).select("-password");
-
-    if (!user) {
-      throw new ApiError(
-        httpStatus.UNAUTHORIZED,
-        "Pengguna pemilik token ini tidak lagi ditemukan."
-      );
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      throw new ApiError(401, "Please authenticate");
     }
-    if (!user.active) {
+
+    const decoded = await tokenService.verifyToken(token);
+
+    const user = await User.findById(decoded.sub);
+
+    if (!user || !user.isActive) {
       throw new ApiError(
-        httpStatus.FORBIDDEN,
-        "Akun pengguna ini tidak aktif."
+        401,
+        "User not found or disabled. Please authenticate",
       );
     }
 
@@ -43,13 +29,11 @@ const protect = catchAsync(async (req, res, next) => {
 
     next();
   } catch (error) {
-    const statusCode =
-      error instanceof ApiError ? error.statusCode : httpStatus.UNAUTHORIZED;
-    const message =
-      error.message || "Token tidak valid atau terjadi kesalahan autentikasi.";
-    throw new ApiError(statusCode, message);
+    const statusCode = error.statusCode || 401;
+    const message = error.message || "Please authenticate";
+    next(new ApiError(statusCode, message));
   }
-});
+};
 
 /**
  * Middleware untuk memverifikasi peran pengguna (Otorisasi)
@@ -65,7 +49,7 @@ const authorize = (requiredRoles = []) => {
     if (!req.user || !req.user.role) {
       throw new ApiError(
         httpStatus.INTERNAL_SERVER_ERROR,
-        "Data pengguna tidak ditemukan setelah autentikasi."
+        "Data pengguna tidak ditemukan setelah autentikasi.",
       );
     }
 
@@ -73,8 +57,8 @@ const authorize = (requiredRoles = []) => {
       throw new ApiError(
         httpStatus.FORBIDDEN,
         `Akses ditolak. Hanya role berikut yang diizinkan: ${rolesToCheck.join(
-          ", "
-        )}.`
+          ", ",
+        )}.`,
       );
     }
     next();
