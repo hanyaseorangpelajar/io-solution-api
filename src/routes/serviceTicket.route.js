@@ -9,55 +9,55 @@ router.use(protect);
 router
   .route("/")
   .post(
-    authorize(["Admin", "Teknisi"]),
-    serviceTicketController.createTicketController
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    serviceTicketController.createTicketController,
   )
   .get(
-    authorize(["Admin", "Teknisi"]),
-    serviceTicketController.getTicketsController
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    serviceTicketController.getTicketsController,
   );
 
 router.get(
   "/history",
-  authorize(["Admin", "Teknisi"]),
-  serviceTicketController.getGlobalHistoryController
+  authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+  serviceTicketController.getGlobalHistoryController,
 );
 
 router.patch(
   "/:id/status",
-  authorize(["Teknisi"]),
-  serviceTicketController.updateStatusController
+  authorize(["TEKNISI"]),
+  serviceTicketController.updateStatusController,
 );
 
 router.post(
   "/:id/items",
-  authorize(["Admin", "Teknisi"]),
-  serviceTicketController.addItemController
+  authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+  serviceTicketController.addItemController,
 );
 
 router.post(
   "/:id/complete-teknisi",
-  authorize(["Teknisi"]),
-  serviceTicketController.completeByTeknisiController
+  authorize(["TEKNISI"]),
+  serviceTicketController.completeByTeknisiController,
 );
 
 router.post(
   "/:id/complete",
-  authorize(["Admin"]),
-  serviceTicketController.completeTicketController
+  authorize(["ADMIN", "SYSADMIN"]),
+  serviceTicketController.completeTicketController,
 );
 
 router.patch(
   "/:id/assign",
-  authorize(["Admin"]),
-  serviceTicketController.assignTicketController
+  authorize(["ADMIN", "SYSADMIN"]),
+  serviceTicketController.assignTicketController,
 );
 
 router
   .route("/:id")
   .get(
-    authorize(["Admin", "Teknisi"]),
-    serviceTicketController.getTicketController
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    serviceTicketController.getTicketController,
   );
 
 module.exports = router;

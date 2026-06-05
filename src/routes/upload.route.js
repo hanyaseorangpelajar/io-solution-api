@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.post(
   "/image",
-  [protect, authorize(["Admin", "Teknisi"]), uploadImage],
-  uploadController.handleUpload
+  [protect, authorize(["ADMIN", "TEKNISI", "SYSADMIN"]), uploadImage],
+  uploadController.handleUpload,
 );
 
 module.exports = router;

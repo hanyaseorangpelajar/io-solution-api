@@ -9,18 +9,19 @@ router.use(protect);
 router
   .route("/")
   .get(
-    authorize(["Admin", "Teknisi"]),
-    customerController.getCustomersController
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    customerController.getCustomersController,
   );
 
 router
   .route("/:id")
   .get(
-    authorize(["Admin", "Teknisi"]),
-    customerController.getCustomerController
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    customerController.getCustomerController,
   )
   .patch(
-    authorize(["Admin", "Teknisi"]),
-    customerController.updateCustomerController
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    customerController.updateCustomerController,
   );
+
 module.exports = router;

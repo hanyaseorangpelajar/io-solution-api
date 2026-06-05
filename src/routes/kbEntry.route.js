@@ -8,18 +8,24 @@ router.use(protect);
 
 router
   .route("/")
-  .get(authorize(["Admin", "Teknisi"]), kbEntryController.getEntriesController);
+  .get(
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    kbEntryController.getEntriesController,
+  );
 
 router
   .route("/:id")
-  .get(authorize(["Admin", "Teknisi"]), kbEntryController.getEntryController)
+  .get(
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    kbEntryController.getEntryController,
+  )
   .patch(
-    authorize(["Admin", "Teknisi"]),
-    kbEntryController.updateEntryController
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    kbEntryController.updateEntryController,
   )
   .delete(
-    authorize(["Admin", "Teknisi"]),
-    kbEntryController.deleteEntryController
+    authorize(["ADMIN", "TEKNISI", "SYSADMIN"]),
+    kbEntryController.deleteEntryController,
   );
 
 module.exports = router;
