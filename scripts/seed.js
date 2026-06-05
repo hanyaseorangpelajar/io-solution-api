@@ -1,15 +1,15 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const { connectDB, disconnectDB } = require("./src/config/db");
+const { connectDB, disconnectDB } = require("../src/config/db");
 const { faker } = require("@faker-js/faker/locale/id_ID");
 
-const { User } = require("./src/models/user.model");
-const { Customer } = require("./src/models/customer.model");
-const { Device } = require("./src/models/device.model");
-const { ServiceTicket } = require("./src/models/serviceTicket.model");
-const { KBTag } = require("./src/models/kbTag.model");
-const { KBEntry } = require("./src/models/kbEntry.model");
-const { LoginAttempt } = require("./src/models/loginAttempt.model");
+const { User } = require("../src/models/user.model");
+const { Customer } = require("../src/models/customer.model");
+const { Device } = require("../src/models/device.model");
+const { ServiceTicket } = require("../src/models/serviceTicket.model");
+const { KBTag } = require("../src/models/kbTag.model");
+const { KBEntry } = require("../src/models/kbEntry.model");
+const { LoginAttempt } = require("../src/models/loginAttempt.model");
 
 const pickRandom = (arr) => {
   if (!arr || arr.length === 0) return null;

@@ -3,39 +3,42 @@ const { Schema } = mongoose;
 
 const customerSchema = new Schema(
   {
-    nama: {
+    name: {
       type: String,
       required: true,
       trim: true,
       index: true,
     },
-    noHp: {
+    phone: {
       type: String,
       required: true,
       trim: true,
       index: true,
     },
-    alamat: {
+    address: {
       type: String,
       trim: true,
     },
-    catatan: {
+    note: {
       type: String,
       trim: true,
     },
   },
   {
-    timestamps: { createdAt: "dibuatPada", updatedAt: "diperbaruiPada" },
-    toJSON: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-      },
-    },
-  }
+    timestamps: true,
+  },
 );
+
+const toCustomerDto = (doc) => ({
+  customerId: doc._id.toString(),
+  name: doc.name,
+  phone: doc.phone,
+  address: doc.address || null,
+  note: doc.note || null,
+  createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt,
+});
 
 const Customer = mongoose.model("Customer", customerSchema);
 
-module.exports = { Customer };
+module.exports = { Customer, toCustomerDto };
