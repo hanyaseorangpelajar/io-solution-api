@@ -1,47 +1,52 @@
 const httpStatus = require("http-status");
 const { userService } = require("../services");
 const { catchAsync, ApiError } = require("../utils");
-const { ROLES } = require("../models/user.model");
+const { ROLES, toUserDto } = require("../models/user.model");
+
 const createUserController = catchAsync(async (req, res) => {
   const userBody = {
-    nama: req.body.fullName || req.body.name || req.body.nama,
+    name: req.body.name,
     username: req.body.username,
     password: req.body.password,
     role: req.body.role,
+    isActive: req.body.isActive,
   };
 
   const user = await userService.createUser(userBody);
-  res.status(httpStatus.CREATED).send(user);
+  res.status(httpStatus.CREATED).send(toUserDto(user));
 });
 
 const getUsersController = catchAsync(async (req, res) => {
   const result = await userService.getUsers(req.query);
-  res.send(result);
+  res.send({
+    ...result,
+    results: result.results.map(toUserDto),
+  });
 });
 
 const getUserController = catchAsync(async (req, res) => {
   const user = await userService.getUserById(req.params.id);
-  res.send(user);
+  res.send(toUserDto(user));
 });
 
 const updateUserController = catchAsync(async (req, res) => {
   if (req.body.role && !ROLES.includes(req.body.role)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Peran tidak valid. Pilihan: ${ROLES.join(", ")}`
+      `Role tidak valid. Pilihan: ${ROLES.join(", ")}`,
     );
   }
 
   const updateBody = {
-    nama: req.body.fullName || req.body.name || req.body.nama,
+    name: req.body.name,
     username: req.body.username,
-    password: req.body.password,
     role: req.body.role,
-    statusAktif: req.body.statusAktif,
+    password: req.body.password,
+    isActive: req.body.isActive,
   };
 
   const user = await userService.updateUserById(req.params.id, updateBody);
-  res.send(user);
+  res.send(toUserDto(user));
 });
 
 const deleteUserController = catchAsync(async (req, res) => {
@@ -50,14 +55,9 @@ const deleteUserController = catchAsync(async (req, res) => {
 });
 
 const updateProfileController = catchAsync(async (req, res) => {
-  const userId = req.user.id;
-
-  const updateBody = {
-    nama: req.body.fullName || req.body.name || req.body.nama,
-  };
-
-  const user = await userService.updateUserProfile(userId, updateBody);
-  res.send(user);
+  const updateBody = { name: req.body.name };
+  const user = await userService.updateUserProfile(req.user.id, updateBody);
+  res.send(toUserDto(user));
 });
 
 const changePasswordController = catchAsync(async (req, res) => {
@@ -65,14 +65,14 @@ const changePasswordController = catchAsync(async (req, res) => {
   if (!currentPassword || !newPassword) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Password saat ini dan password baru wajib diisi."
+      "Password saat ini dan password baru wajib diisi.",
     );
   }
 
   await userService.changeUserPassword(
     req.user.id,
     currentPassword,
-    newPassword
+    newPassword,
   );
   res.status(httpStatus.OK).send({ message: "Password berhasil diubah." });
 });
@@ -80,18 +80,18 @@ const changePasswordController = catchAsync(async (req, res) => {
 const getLoginHistory = catchAsync(async (req, res) => {
   const result = await userService.getLoginHistoryByUserId(
     req.user.id,
-    req.query
+    req.query,
   );
   res.send(result);
 });
 
 module.exports = {
-  createUser: createUserController,
-  getUsers: getUsersController,
-  getUser: getUserController,
-  updateUser: updateUserController,
-  deleteUser: deleteUserController,
-  updateProfile: updateProfileController,
-  changePassword: changePasswordController,
-  getLoginHistory: getLoginHistory,
+  createUserController,
+  getUsersController,
+  getUserController,
+  updateUserController,
+  deleteUserController,
+  updateProfileController,
+  changePasswordController,
+  getLoginHistory,
 };

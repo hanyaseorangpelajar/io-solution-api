@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { Schema } = mongoose;
 
-const ROLES = ["SysAdmin", "Admin", "Teknisi"];
+const ROLES = ["SYSADMIN", "ADMIN", "TEKNISI"];
 
 const UserSchema = new Schema(
   {
-    nama: {
+    name: {
       type: String,
       required: [true, "Nama wajib diisi"],
       trim: true,
@@ -32,50 +32,23 @@ const UserSchema = new Schema(
         message: "Role tidak valid ({VALUE})",
       },
       required: true,
-      default: "Teknisi",
+      default: "TEKNISI",
     },
-    statusAktif: {
+    isActive: {
       type: Boolean,
       default: true,
       index: true,
     },
   },
   {
-    timestamps: { createdAt: "dibuatPada", updatedAt: "diperbaruiPada" },
-    toJSON: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.passwordHash;
-        delete ret.__v;
-        return ret;
-      },
-    },
-    toObject: {
-      transform(doc, ret) {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.passwordHash;
-        delete ret.__v;
-        return ret;
-      },
-    },
-  }
+    timestamps: true,
+  },
 );
 
-/**
- * Cek apakah username sudah terdaftar
- */
 UserSchema.statics.findByUsernameWithPassword = function (username) {
   return this.findOne({ username }).select("+passwordHash");
 };
 
-/**
- * Cek apakah username sudah terdaftar (untuk validasi)
- * @param {string} username - Username yang akan dicek
- * @param {string} [excludeUserId] - (Opsional) ID user yang dikecualikan dari pencarian
- * @returns {Promise<boolean>} - true jika username sudah diambil, false jika belum
- */
 UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
   const query = { username: username.toLowerCase() };
   if (excludeUserId) {
@@ -85,9 +58,6 @@ UserSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
   return !!user;
 };
 
-/**
- * Pre-save hook untuk hash password
- */
 UserSchema.pre("save", async function (next) {
   const user = this;
   if (user.isModified("passwordHash")) {
@@ -97,13 +67,20 @@ UserSchema.pre("save", async function (next) {
   next();
 });
 
-/**
- * Method untuk membandingkan password (digunakan saat login)
- */
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
+const toUserDto = (doc) => ({
+  userId: doc._id.toString(),
+  name: doc.name,
+  username: doc.username,
+  role: doc.role,
+  isActive: doc.isActive,
+  createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt,
+});
+
 const User = mongoose.model("User", UserSchema);
 
-module.exports = { User, ROLES };
+module.exports = { User, ROLES, toUserDto };

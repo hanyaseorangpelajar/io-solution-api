@@ -1,31 +1,21 @@
 const httpStatus = require("http-status");
 const { User, ROLES } = require("../models/user.model");
-
-// --- PERBAIKAN 1: Impor parsePagination dan ApiError dari utils ---
 const { ApiError, parsePagination } = require("../utils");
-// --- AKHIR PERBAIKAN 1 ---
-
-// Impor LoginAttempt
 const { LoginAttempt } = require("../models/loginAttempt.model");
 
-/**
- * Membuat pengguna baru (oleh Admin).
- * @param {Object} userBody - Data pengguna (nama, username, password, role).
- * @returns {Promise<User>}
- */
 const createUser = async (userBody) => {
-  const { nama, username, password, role } = userBody;
+  const { name, username, password, role } = userBody;
 
-  if (!nama || !username || !password || !role) {
+  if (!name || !username || !password || !role) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Nama, Username, Password, dan Role wajib diisi."
+      "Name, Username, Password, dan Role wajib diisi.",
     );
   }
   if (!ROLES.includes(role)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Role tidak valid. Pilihan: ${ROLES.join(", ")}`
+      `Role tidak valid. Pilihan: ${ROLES.join(", ")}`,
     );
   }
 
@@ -34,47 +24,44 @@ const createUser = async (userBody) => {
   }
 
   const user = await User.create({
-    nama,
+    name,
     username,
     passwordHash: password,
     role,
+    isActive: userBody.isActive ?? true,
   });
+
   return user;
 };
 
-/**
- * Mengambil daftar semua pengguna.
- */
 const getUsers = async (filter) => {
+  const { page, limit, skip } = parsePagination(filter, 10);
   const safe = {};
-  if (typeof filter?.statusAktif === "boolean")
-    safe.statusAktif = filter.statusAktif;
-  if (filter?.role) safe.role = filter.role;
-  if (filter?.q) {
+
+  if (filter.q) {
     safe.$or = [
-      { nama: { $regex: filter.q, $options: "i" } },
+      { name: { $regex: filter.q, $options: "i" } },
       { username: { $regex: filter.q, $options: "i" } },
     ];
   }
 
-  // --- PERBAIKAN 2: Gunakan parsePagination di sini juga ---
-  const { page, limit, skip } = parsePagination(filter, 20); // Default 20 per halaman
+  if (filter.role && filter.role !== "all") {
+    safe.role = filter.role;
+  }
+  if (filter.isActive !== undefined && filter.isActive !== "all") {
+    safe.isActive = filter.isActive === "true" || filter.isActive === true;
+  }
 
-  const [users, totalResults] = await Promise.all([
-    User.find(safe).sort({ dibuatPada: -1 }).skip(skip).limit(limit),
+  const [results, totalResults] = await Promise.all([
+    User.find(safe).sort({ createdAt: -1 }).skip(skip).limit(limit),
     User.countDocuments(safe),
   ]);
-  return {
-    results: users,
-    totalResults,
-    page,
-    limit,
-  };
+
+  const totalPages = Math.ceil(totalResults / limit) || 1;
+
+  return { results, page, limit, totalResults, totalPages };
 };
 
-/**
- * Mengambil pengguna berdasarkan ID.
- */
 const getUserById = async (userId) => {
   const user = await User.findById(userId);
   if (!user) {
@@ -83,97 +70,54 @@ const getUserById = async (userId) => {
   return user;
 };
 
-/**
- * Update pengguna berdasarkan ID (oleh Admin).
- */
 const updateUserById = async (userId, updateBody) => {
   const user = await getUserById(userId);
 
-  if (updateBody.nama) user.nama = updateBody.nama;
-  if (updateBody.role) {
-    if (!ROLES.includes(updateBody.role)) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `Role tidak valid. Pilihan: ${ROLES.join(", ")}`
-      );
-    }
-    user.role = updateBody.role;
-  }
-  if (typeof updateBody.statusAktif === "boolean") {
-    user.statusAktif = updateBody.statusAktif;
-  }
-
   if (
     updateBody.username &&
-    updateBody.username.toLowerCase() !== user.username
+    (await User.isUsernameTaken(updateBody.username, userId))
   ) {
-    const newUsername = updateBody.username.toLowerCase();
-    if (await User.isUsernameTaken(newUsername, userId)) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Username sudah digunakan.");
-    }
-    user.username = newUsername;
+    throw new ApiError(httpStatus.BAD_REQUEST, "Username sudah digunakan.");
   }
 
-  if (updateBody.password) {
-    user.passwordHash = updateBody.password;
-  }
+  if (updateBody.name) user.name = updateBody.name;
+  if (updateBody.username) user.username = updateBody.username;
+  if (updateBody.role) user.role = updateBody.role;
+  if (updateBody.password) user.passwordHash = updateBody.password;
+  if (updateBody.isActive !== undefined) user.isActive = updateBody.isActive;
 
   await user.save();
   return user;
 };
 
-/**
- * Hapus pengguna berdasarkan ID.
- */
-const deleteUserById = async (userId) => {
-  const user = await getUserById(userId);
-  await user.deleteOne();
-  return user;
-};
-
-/**
- * Update profil pengguna (oleh pengguna sendiri).
- */
 const updateUserProfile = async (userId, updateBody) => {
   const user = await getUserById(userId);
-
-  if (updateBody.nama) {
-    user.nama = updateBody.nama;
+  if (updateBody.name) {
+    user.name = updateBody.name;
   }
-
   await user.save();
   return user;
 };
 
-/**
- * Ganti password (oleh pengguna sendiri).
- */
 const changeUserPassword = async (userId, currentPassword, newPassword) => {
-  const user = await User.findById(userId).select("passwordHash");
+  const user = await User.findById(userId).select("+passwordHash");
 
-  if (!user) {
+  if (!user)
     throw new ApiError(httpStatus.NOT_FOUND, "Pengguna tidak ditemukan");
-  }
 
   const isMatch = await user.comparePassword(currentPassword);
-  if (!isMatch) {
+  if (!isMatch)
     throw new ApiError(
       httpStatus.UNAUTHORIZED,
-      "Password saat ini tidak cocok."
+      "Password saat ini tidak cocok.",
     );
-  }
 
   user.passwordHash = newPassword;
   await user.save();
-
   return user;
 };
 
-/**
- * Mengambil riwayat login untuk pengguna tertentu.
- */
 const getLoginHistoryByUserId = async (userId, query) => {
-  // Fungsi ini sekarang aman karena parsePagination sudah diimpor
   const { page, limit, skip } = parsePagination(query, 10);
   const queryFilter = { user: userId };
 
@@ -187,14 +131,13 @@ const getLoginHistoryByUserId = async (userId, query) => {
   ]);
 
   const totalPages = Math.ceil(totalResults / limit) || 1;
+  return { results: logs, page, limit, totalResults, totalPages };
+};
 
-  return {
-    results: logs,
-    page,
-    limit,
-    totalResults,
-    totalPages,
-  };
+const deleteUserById = async (userId) => {
+  const user = await getUserById(userId);
+  await user.deleteOne();
+  return user;
 };
 
 module.exports = {
